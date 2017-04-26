@@ -28,9 +28,34 @@ In this first proof of concept a file
     \relative { c'2 c4 | c g' b, | a2. | }
   }
 >>
-\FileExport #`((exporter . ,exportMusicXML))
+\FileExport #`((exporter . ,exportHumdrum))
 ```
-creates an XML-file:
+
+creates a humdrum file (.krn):
+
+```humdrum
+**kern	**kern
+*staff2	*staff1
+*	*^
+=1	=1	=1
+*M3/4	*M3/4	*M3/4
+2c	4.cc	8eL
+.	.	8f
+.	.	8g
+.	8a	8f#J
+4c	4g	4e
+=2	=2	=2
+4c	4g	2e-
+4g	4b-	.
+4B	4g b	4d
+=3	=3	=3
+2.A	4a	2c e
+.	4cc	.
+.	4a	4c f
+=4	=4	=4
+*-	*-	*-
+```
+And with `,exportMusicXML` it creates an XML-file:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
