@@ -113,7 +113,7 @@
             (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
 
             (if (symbol? beam) (writeln "<beam number=\"1\">~A</beam>" beam))
-            (writetimemod dur)
+            ;(writetimemod dur)
             (writeln "</note>"))
 
            ((RestEvent)
@@ -124,7 +124,7 @@
             (writeln "<voice>~A</voice>" voice)
             (writetype dur)
             (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
-            (writetimemod dur)
+            ;(writetimemod dur)
             (writeln "</note>"))
 
            ((EventChord)

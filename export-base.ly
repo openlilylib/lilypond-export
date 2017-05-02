@@ -160,6 +160,9 @@ collectVoice =
                         (set! beam-time (cons (cdr beam-time) (cons bar moment))))
                     ; store music
                     (tree-set! musicexport path music)))
+                 ((eq? (ly:music-property music 'name) 'TupletSpanEvent)
+                  (ly:message "tuplet ~A" event)
+                  )
                  )))
            ))
        )
