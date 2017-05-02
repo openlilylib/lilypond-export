@@ -34,7 +34,10 @@ runTranslator =
 
 % create duration from moment
 #(define-public (moment->duration mom)
-   (ly:make-duration (ly:intlog2 (ly:moment-main-denominator mom)) 0 (ly:moment-main-numerator mom)))
+   (ly:make-duration
+    (ly:intlog2 (ly:moment-main-denominator mom)) 0
+    (ly:moment-main-numerator mom)
+    ))
 
 % define context property ... don't you touch the inner gears! ...
 defineContextProperty =
@@ -139,6 +142,14 @@ collectVoice =
                       )
                     ; if we already have a note, combine it to a eventchord
                     (if (ly:music? notes) (set! music (combine-notes notes music)))
+                    ; tuplets
+                    (let ((scale (ly:duration-scale dur)))
+                      (if (not (integer? scale))
+                          (let ((num (numerator scale))
+                                (den (denominator scale)))
+                            (ly:message "tuplet ~A:~A" num den)
+                            (tree-set! musicexport `(,@path tuplet) scale)
+                            )))
                     ; remember current time
                     (ly:event-set-property! event 'timestamp (cons bar moment))
                     ; track time for beams
