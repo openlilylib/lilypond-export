@@ -126,44 +126,49 @@ collectVoice =
            ; notes and rests are stored in the tree under measeure/moment/staff/voice
            ; TODO MultiMeasureRests!
            (if (ly:music? music)
-               (begin
-                (ly:music-set-property! music 'timestamp (cons bar moment))
-                (cond
-                 ((memq (ly:music-property music 'name) '(NoteEvent RestEvent))
-                  (let* ((path (list bar moment
-                                 (ly:context-property context 'staff-id)
-                                 (ly:context-property context 'voice-id)))
-                         (notes (tree-get musicexport path))
-                         (dur (ly:event-property event 'duration)))
-                    ; track shortest duration (musicXML/MEI divisions)
-                    (let ((shortdur (tree-get musicexport '(division-dur))))
-                      (if (and (ly:duration? dur)(or (not shortdur) (ly:duration<? dur shortdur)))
-                          (tree-set! musicexport '(division-dur) dur))
-                      )
-                    ; if we already have a note, combine it to a eventchord
-                    (if (ly:music? notes) (set! music (combine-notes notes music)))
-                    ; tuplets
-                    (let ((scale (ly:duration-scale dur)))
-                      (if (not (integer? scale))
-                          (let ((num (numerator scale))
-                                (den (denominator scale)))
-                            (ly:message "tuplet ~A:~A" num den)
-                            (tree-set! musicexport `(,@path tuplet) scale)
-                            )))
-                    ; remember current time
-                    (ly:event-set-property! event 'timestamp (cons bar moment))
-                    ; track time for beams
-                    (if (not (and
-                              (pair? (cdr beam-time))
-                              (equal? (cadr beam-time) bar)
-                              (equal? (cddr beam-time) moment)))
-                        (set! beam-time (cons (cdr beam-time) (cons bar moment))))
-                    ; store music
-                    (tree-set! musicexport path music)))
-                 ((eq? (ly:music-property music 'name) 'TupletSpanEvent)
-                  (ly:message "tuplet ~A" event)
-                  )
-                 )))
+               (let* ((path (list bar moment
+                              (ly:context-property context 'staff-id)
+                              (ly:context-property context 'voice-id)))
+                      (notes (tree-get musicexport path)))
+                 (ly:music-set-property! music 'timestamp (cons bar moment))
+                 (cond
+                  ((memq (ly:music-property music 'name) '(NoteEvent RestEvent))
+                   (let ((dur (ly:event-property event 'duration)))
+                     ; track shortest duration (musicXML/MEI divisions)
+                     (let ((shortdur (tree-get musicexport '(division-dur))))
+                       (if (and (ly:duration? dur)(or (not shortdur) (ly:duration<? dur shortdur)))
+                           (tree-set! musicexport '(division-dur) dur))
+                       )
+                     ; if we already have a note, combine it to a eventchord
+                     (if (ly:music? notes) (set! music (combine-notes notes music)))
+                     ; tuplets
+                     (let ((scale (ly:duration-scale dur)))
+                       (if (not (integer? scale))
+                           (let ((num (numerator scale))
+                                 (den (denominator scale)))
+                             (ly:message "scale ~A/~A" num den)
+                             ;(tree-set! musicexport `(,@path tuplet) scale)
+                             )))
+                     ; remember current time
+                     (ly:event-set-property! event 'timestamp (cons bar moment))
+                     ; track time for beams
+                     (if (not (and
+                               (pair? (cdr beam-time))
+                               (equal? (cadr beam-time) bar)
+                               (equal? (cddr beam-time) moment)))
+                         (set! beam-time (cons (cdr beam-time) (cons bar moment))))
+                     ; store music
+                     (tree-set! musicexport path music)))
+                  ((eq? (ly:music-property music 'name) 'TupletSpanEvent)
+                   (let ((timestamp (ly:music-property music 'timestamp))
+                         (num (ly:music-property music 'numerator))
+                         (den (ly:music-property music 'denominator))
+                         (dir (ly:music-property music 'span-direction)))
+                     (ly:message "tuplet ~A:~A ~A ~A ~A" num den timestamp (cons bar moment) dir)
+
+                     ;(tree-set! musicexport `(,@path tuplet) (/ num den))
+                     ))
+                  )))
            ))
        )
       (acknowledgers
