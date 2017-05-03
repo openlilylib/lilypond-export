@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="http://music-encoding.org/schema/3.0.0/mei-all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="http://music-encoding.org/schema/3.0.0/mei-all.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="3.0.0">
+    <meiHead>
+        <fileDesc>
+            <titleStmt>
+                <title />
+            </titleStmt>
+            <pubStmt />
+        </fileDesc>
+        <encodingDesc>
+            <appInfo>
+                <application isodate="2017-05-03T14:25:27" version="0.9.14-dev-98874c6">
+                    <name>Verovio</name>
+                    <p>Transcoded from Humdrum</p>
+                </application>
+            </appInfo>
+        </encodingDesc>
+        <workDesc>
+            <work>
+                <titleStmt>
+                    <title />
+                </titleStmt>
+            </work>
+        </workDesc>
+    </meiHead>
+    <music>
+        <body>
+            <mdiv>
+                <score>
+                    <scoreDef xml:id="scoredef-0000000831892655">
+                        <staffGrp xml:id="staffgrp-0000001585896842" symbol="brace" barthru="true">
+                            <staffDef xml:id="staffdef-0000001344129343" n="1" clef.shape="G" clef.line="2" meter.count="3" meter.unit="4" lines="5" />
+                            <staffDef xml:id="staffdef-0000001928761184" n="2" clef.shape="F" clef.line="4" meter.count="3" meter.unit="4" lines="5" />
+                        </staffGrp>
+                    </scoreDef>
+                    <section xml:id="section-0000001578022132">
+                        <measure xml:id="measure-L6" n="1" type="m-1">
+                            <staff xml:id="staff-L6F3N1" n="1">
+                                <layer xml:id="layer-L6F3N1" n="1">
+                                    <note xml:id="note-L8F3" type="qon-0 qoff-3_2 pname-c acc-n oct-5 b40c-2 b12c-0 " dots="1" dur="4" oct="5" pname="c">
+                                        <accid xml:id="accid-L8F3" accid.ges="n" />
+                                    </note>
+                                    <note xml:id="note-L11F3" type="qon-3_2 qoff-2 pname-a acc-n oct-4 b40c-31 b12c-9 " dur="8" oct="4" pname="a">
+                                        <accid xml:id="accid-L11F3" accid.ges="n" />
+                                    </note>
+                                    <note xml:id="note-L12F3" type="qon-2 qoff-3 pname-g acc-n oct-4 b40c-25 b12c-7 " dur="4" oct="4" pname="g">
+                                        <accid xml:id="accid-L12F3" accid.ges="n" />
+                                    </note>
+                                </layer>
+                                <layer xml:id="layer-L8F4N2" n="2">
+                                    <beam xml:id="beam-L8F4-L11F4">
+                                        <note xml:id="note-L8F4" type="qon-0 qoff-1_2 pname-e acc-n oct-4 b40c-14 b12c-4 " dur="8" oct="4" pname="e">
+                                            <accid xml:id="accid-L8F4" accid.ges="n" />
+                                        </note>
+                                        <note xml:id="note-L9F4" type="qon-1_2 qoff-1 pname-f acc-n oct-4 b40c-19 b12c-5 " dur="8" oct="4" pname="f">
+                                            <accid xml:id="accid-L9F4" accid.ges="n" />
+                                        </note>
+                                        <note xml:id="note-L10F4" type="qon-1 qoff-3_2 pname-g acc-n oct-4 b40c-25 b12c-7 " dur="8" oct="4" pname="g">
+                                            <accid xml:id="accid-L10F4" accid.ges="n" />
+                                        </note>
+                                        <note xml:id="note-L11F4" type="qon-3_2 qoff-2 pname-f acc-s oct-4 b40c-20 b12c-6 " dur="8" oct="4" pname="f">
+                                            <accid xml:id="accid-L11F4" accid="s" />
+                                        </note>
+                                    </beam>
+                                    <note xml:id="note-L12F4" type="qon-2 qoff-3 pname-e acc-n oct-4 b40c-14 b12c-4 " dur="4" oct="4" pname="e">
+                                        <accid xml:id="accid-L12F4" accid.ges="n" />
+                                    </note>
+                                </layer>
+                            </staff>
+                            <staff xml:id="staff-L6F2N1" n="2">
+                                <layer xml:id="layer-L6F2N1" n="1">
+                                    <note xml:id="note-L8F2" type="qon-0 qoff-2 pname-c acc-n oct-4 b40c-2 b12c-0 " dur="2" oct="4" pname="c">
+                                        <accid xml:id="accid-L8F2" accid.ges="n" />
+                                    </note>
+                                    <note xml:id="note-L12F2" type="qon-2 qoff-3 pname-c acc-n oct-4 b40c-2 b12c-0 " dur="4" oct="4" pname="c">
+                                        <accid xml:id="accid-L12F2" accid.ges="n" />
+                                    </note>
+                                </layer>
+                            </staff>
+                        </measure>
+                        <measure xml:id="measure-L13" n="2" type="m-2">
+                            <staff xml:id="staff-L13F3N1" n="1">
+                                <layer xml:id="layer-L13F3N1" n="1">
+                                    <note xml:id="note-L14F3" type="qon-3 qoff-4 pname-g acc-n oct-4 b40c-25 b12c-7 " dur="4" oct="4" pname="g">
+                                        <accid xml:id="accid-L14F3" accid.ges="n" />
+                                    </note>
+                                    <note xml:id="note-L15F3" type="qon-4 qoff-5 pname-b acc-f oct-4 b40c-36 b12c-10 " dur="4" oct="4" pname="b">
+                                        <accid xml:id="accid-L15F3" accid="f" />
+                                    </note>
+                                    <chord xml:id="chord-L16F3" dur="4">
+                                        <note xml:id="note-L16F3S1" type="qon-5 qoff-6 pname-g acc-n oct-4 b40c-25 b12c-7 " oct="4" pname="g">
+                                            <accid xml:id="accid-L16F3S1" accid.ges="n" />
+                                        </note>
+                                        <note xml:id="note-L16F3S2" type="qon-5 qoff-6 pname-b acc-n oct-4 b40c-37 b12c-11 " oct="4" pname="b">
+                                            <accid xml:id="accid-L16F3S2" accid="n" />
+                                        </note>
+                                    </chord>
+                                </layer>
+                                <layer xml:id="layer-L13F4N2" n="2">
+                                    <note xml:id="note-L14F4" type="qon-3 qoff-5 pname-e acc-f oct-4 b40c-13 b12c-3 " dur="2" oct="4" pname="e">
+                                        <accid xml:id="accid-L14F4" accid="f" />
+                                    </note>
+                                    <note xml:id="note-L16F4" type="qon-5 qoff-6 pname-d acc-n oct-4 b40c-8 b12c-2 " dur="4" oct="4" pname="d">
+                                        <accid xml:id="accid-L16F4" accid.ges="n" />
+                                    </note>
+                                </layer>
+                            </staff>
+                            <staff xml:id="staff-L13F2N1" n="2">
+                                <layer xml:id="layer-L13F2N1" n="1">
+                                    <note xml:id="note-L14F2" type="qon-3 qoff-4 pname-c acc-n oct-4 b40c-2 b12c-0 " dur="4" oct="4" pname="c">
+                                        <accid xml:id="accid-L14F2" accid.ges="n" />
+                                    </note>
+                                    <note xml:id="note-L15F2" type="qon-4 qoff-5 pname-g acc-n oct-3 b40c-25 b12c-7 " dur="4" oct="3" pname="g">
+                                        <accid xml:id="accid-L15F2" accid.ges="n" />
+                                    </note>
+                                    <note xml:id="note-L16F2" type="qon-5 qoff-6 pname-b acc-n oct-3 b40c-37 b12c-11 " dur="4" oct="3" pname="b">
+                                        <accid xml:id="accid-L16F2" accid.ges="n" />
+                                    </note>
+                                </layer>
+                            </staff>
+                        </measure>
+                        <measure xml:id="measure-L17" n="3" type="m-3">
+                            <staff xml:id="staff-L17F3N1" n="1">
+                                <layer xml:id="layer-L17F3N1" n="1">
+                                    <tuplet xml:id="tuplet-L18F3-L20F3" num="3" numbase="2" bracket.visible="true" num.format="count">
+                                        <note xml:id="note-L18F3" type="qon-6 qoff-20_3 pname-a acc-n oct-4 b40c-31 b12c-9 " dur="4" oct="4" pname="a">
+                                            <accid xml:id="accid-L18F3" accid.ges="n" />
+                                        </note>
+                                        <note xml:id="note-L19F3" type="qon-20_3 qoff-22_3 pname-c acc-n oct-5 b40c-2 b12c-0 " dur="4" oct="5" pname="c">
+                                            <accid xml:id="accid-L19F3" accid.ges="n" />
+                                        </note>
+                                        <note xml:id="note-L20F3" type="qon-22_3 qoff-8 pname-a acc-n oct-4 b40c-31 b12c-9  tie-start" dur="4" oct="4" pname="a">
+                                            <accid xml:id="accid-L20F3" accid.ges="n" />
+                                        </note>
+                                    </tuplet>
+                                    <note xml:id="note-L21F3" type="qon-8 qoff-9 pname-a acc-n oct-4 b40c-31 b12c-9  tie-stop" dur="4" oct="4" pname="a">
+                                        <accid xml:id="accid-L21F3" accid.ges="n" />
+                                    </note>
+                                </layer>
+                                <layer xml:id="layer-L17F4N2" n="2">
+                                    <chord xml:id="chord-L18F4" dur="2">
+                                        <note xml:id="note-L18F4S1" type="qon-6 qoff-8 pname-c acc-n oct-4 b40c-2 b12c-0 " oct="4" pname="c">
+                                            <accid xml:id="accid-L18F4S1" accid.ges="n" />
+                                        </note>
+                                        <note xml:id="note-L18F4S2" type="qon-6 qoff-8 pname-e acc-n oct-4 b40c-14 b12c-4 " oct="4" pname="e">
+                                            <accid xml:id="accid-L18F4S2" accid.ges="n" />
+                                        </note>
+                                    </chord>
+                                    <chord xml:id="chord-L21F4" dur="4">
+                                        <note xml:id="note-L21F4S1" type="qon-8 qoff-9 pname-c acc-n oct-4 b40c-2 b12c-0 " oct="4" pname="c">
+                                            <accid xml:id="accid-L21F4S1" accid.ges="n" />
+                                        </note>
+                                        <note xml:id="note-L21F4S2" type="qon-8 qoff-9 pname-f acc-n oct-4 b40c-19 b12c-5 " oct="4" pname="f">
+                                            <accid xml:id="accid-L21F4S2" accid.ges="n" />
+                                        </note>
+                                    </chord>
+                                </layer>
+                            </staff>
+                            <staff xml:id="staff-L17F2N1" n="2">
+                                <layer xml:id="layer-L17F2N1" n="1">
+                                    <note xml:id="note-L18F2" type="qon-6 qoff-9 pname-a acc-n oct-3 b40c-31 b12c-9 " dots="1" dur="2" oct="3" pname="a">
+                                        <accid xml:id="accid-L18F2" accid.ges="n" />
+                                    </note>
+                                </layer>
+                            </staff>
+                            <tie xml:id="tie-L20F3-L21F3" startid="#note-L20F3" endid="#note-L21F3" />
+                        </measure>
+                    </section>
+                </score>
+            </mdiv>
+        </body>
+    </music>
+</mei>
+
