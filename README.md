@@ -4,15 +4,11 @@ In this repository I am creating an export-infrastructure for LilyPond.
 The files presented here are far from production-ready, but at least the functions provided here can
 create humdrum and musicXML for very simple scores.
 
-*ISSUE humdrum and musicXML both have to be included!*
-
 In this first proof of concept a file
 
 ```lilypond
 \version "2.19.60"
-\include "export-humdrum.ly"
-\include "export-musicXML.ly"
-
+\include "export-base.ly" % TODO package.ily!
 
 \runTranslator
 <<

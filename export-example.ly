@@ -1,7 +1,13 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %                                                                             %
-% lilypond-export                                                             %
-% ===============                                                             %
+% This file is part of openLilyLib,                                           %
+%                      ===========                                            %
+% the community library project for GNU LilyPond                              %
+% (https://github.com/openlilylib)                                            %
+%              -----------                                                    %
+%                                                                             %
+% Library: lilypond-export                                                    %
+%          ===============                                                    %
 %                                                                             %
 % export foreign file formats with LilyPond                                   %
 %                                                                             %
@@ -18,14 +24,15 @@
 % You should have received a copy of the GNU General Public License           %
 % along with openLilyLib. If not, see <http://www.gnu.org/licenses/>.         %
 %                                                                             %
+% openLilyLib is maintained by Urs Liska, ul@openlilylib.org                  %
 % lilypond-export is maintained by Jan-Peter Voigt, jp.voigt@gmx.de           %
 %                                                                             %
-%       Copyright Jan-Peter Voigt, 2017                                       %
+%       Copyright Jan-Peter Voigt, Urs Liska, 2017                            %
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 \version "2.19.58"
-\include "export-humdrum.ly"
-\include "export-musicXML.ly"
+\include "export-base.ly"
 
 music = <<
   \new Staff {
@@ -47,11 +54,13 @@ music = <<
 \runTranslator \music
 \FileExport #`((exporter . ,exportHumdrum)) % TODO more than one output format in one run?
 
+opts.exporter = #exportMusicXML
+
 % or as a layout extension that is added to the layout
 \score {
   \music
   \layout {
-    \FileExport #`((exporter . ,exportMusicXML))
+    \FileExport #opts
   }
   \midi {}
 }
