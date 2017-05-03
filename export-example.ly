@@ -31,14 +31,15 @@ music = <<
   \new Staff {
     \time 3/4
     \relative <<
-      { c''4.( a8 g4) | g bes <g b> | \tuplet 3/2 { a c a~ } a | } \\
+      { c''4. a8 g4 | g( bes) <g b> | \tuplet 3/2 { a c a~ } a | } \\
       { e8 f g fis e4 | es2 d4 | <c e>2 <c f>4 }
     >>
   }
   \new Staff {
     \time 3/4
-    \relative { c'2 c4 | c g' b, | a2. | }
+    \new Voice = "mel" \relative { c'2 c4 | c g' b, | a2. | }
   }
+  \new Lyrics \lyricsto "mel" { \lyricmode { la le li lu la lo } }
 >>
 
 % TODO wrap run-translator in function

@@ -224,6 +224,27 @@ collectVoice =
        )
       )))
 
+collectLyrics =
+#(lambda (context)
+   (make-engraver
+    (listeners
+     ((lyric-event engraver event)
+      (let ((musicexport (ly:context-property context 'music-export))
+            (text (ly:event-property event 'text))
+            (voice (ly:context-property context 'associatedVoiceContext)))
+        (if (ly:context? voice)
+            (let ((staff-id (ly:context-property voice 'staff-id))
+                  (voice-id (ly:context-property voice 'voice-id))
+                  (bar (ly:context-property context 'currentBarNumber 1))
+                  (moment (ly:context-property context 'measurePosition (ly:make-moment 0))))
+              (tree-set! musicexport (list bar moment staff-id voice-id 'lyric) text)
+              )
+            (ly:message "syl ~A" text))
+        ))
+     )
+    ))
+
+
 % engraver to group voices in one staff
 collectStaff =
 #(lambda (context)
@@ -289,6 +310,10 @@ FileExport =
          \context {
            \Staff
            \consists #collectStaff
+         }
+         \context {
+           \Lyrics
+           \consists #collectLyrics
          }
          \context {
            \Score

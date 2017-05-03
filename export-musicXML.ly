@@ -105,15 +105,17 @@
             )))
      (define (writemusic m staff voice . opts)
        (let ((dur (ly:music-property m 'duration))
+             (chord (ly:assoc-get 'chord opts #f #f))
              (beam (ly:assoc-get 'beam opts))
              (tuplet (ly:assoc-get 'tuplet opts))
+             (lyric (ly:assoc-get 'lyric opts))
              (moment (ly:assoc-get 'moment opts)))
 
          (case (ly:music-property m 'name)
 
            ((NoteEvent)
             (writeln "<note>")
-            (if (ly:assoc-get 'chord opts #f #f) (writeln "<chord />"))
+            (if chord (writeln "<chord />"))
             (writepitch (ly:music-property m 'pitch))
             (writeduration dur moment)
 
@@ -124,6 +126,11 @@
             (if (symbol? beam) (writeln "<beam number=\"1\">~A</beam>" beam))
             (writetimemod dur)
             (writetuplet tuplet)
+            (if (and (not chord) (markup? lyric))
+                (begin
+                (writeln "<lyric><syllabic>single</syllabic><text>~A</text></lyric>" lyric)
+                ))
+                
             (writeln "</note>"))
 
            ((RestEvent)
@@ -208,7 +215,9 @@
                            (if (ly:music? music)
                                (let ((dur (ly:music-property music 'duration))
                                      (beam (tree-get musicexport (list measure moment staff voice 'beam)))
-                                     (tuplet (tree-get musicexport (list measure moment staff voice 'tuplet))))
+                                     (tuplet (tree-get musicexport (list measure moment staff voice 'tuplet)))
+                                     (lyric (tree-get musicexport (list measure moment staff voice 'lyric)))
+                                     )
                                  (case beam
                                    ((start) (set! beamcont 'continue))
                                    ((end) (set! beamcont #f))
@@ -221,7 +230,8 @@
                                               ((symbol? beam) beam)
                                               ((symbol? beamcont) beamcont)))
                                    `(moment . ,moment)
-                                   `(tuplet . ,tuplet))
+                                   `(tuplet . ,tuplet)
+                                   `(lyric . ,lyric))
                                  (if (ly:duration? dur)
                                      (set! backup (+ backup (* (duration-factor dur) divisions))))
                                  ))
