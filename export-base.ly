@@ -49,8 +49,8 @@ defineContextProperty =
 
 \defineContextProperty voice-context-count #integer? "Count voice contexts"
 \defineContextProperty staff-context-count #integer? "Count staff contexts"
-\defineContextProperty voice-id #integer? "Voice"
-\defineContextProperty staff-id #integer? "Staff"
+\defineContextProperty voice-id #integer? "Voice ID"
+\defineContextProperty staff-id #integer? "Staff ID"
 \defineContextProperty music-export #tree? "Music export store"
 
 % check name property of music object
