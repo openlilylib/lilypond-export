@@ -36,8 +36,8 @@ music = <<
     >>
   }
   \new Staff {
-    \time 3/4
-    \new Voice = "mel" \relative { c'2 c4 | c g' b, | a2. | }
+    \time 3/4 \clef bass
+    \new Voice = "mel" \relative { c'2 c4 | c g b | a2. | }
   }
   \new Lyrics \lyricsto "mel" { \lyricmode { la le li lu la lo } }
 >>

@@ -26,6 +26,8 @@
 \version "2.19.58"
 \include "export-base.ly"
 
+% TODO ties, slurs
+
 #(define (duration-factor dur)
    (*
     (/ 4 (expt 2 (ly:duration-log dur)))
@@ -128,9 +130,9 @@
             (writetuplet tuplet)
             (if (and (not chord) (markup? lyric))
                 (begin
-                (writeln "<lyric><syllabic>single</syllabic><text>~A</text></lyric>" lyric)
-                ))
-                
+                 (writeln "<lyric><syllabic>single</syllabic><text>~A</text></lyric>" lyric)
+                 ))
+
             (writeln "</note>"))
 
            ((RestEvent)
@@ -190,6 +192,22 @@
 
            (for-each
             (lambda (staff)
+              (define (writeclef measure moment doattr)
+                (let ((clefGlyph (tree-get musicexport (list measure moment staff 'clefGlyph)))
+                      (clefPosition (tree-get musicexport (list measure moment staff 'clefPosition)))
+                      (clefTransposition (tree-get musicexport (list measure moment staff 'clefTransposition))))
+                  (if (and (string? clefGlyph)(integer? clefPosition))
+                      (begin
+                       (if doattr (writeln "<attributes>"))
+                       (writeln "<clef><sign>~A</sign><line>~A</line>~A</clef>"
+                         (list-ref (string-split clefGlyph #\.) 1)
+                         (+ 3 (/ clefPosition 2))
+                         (if (and (not (= 0 clefTransposition))(= 0 (modulo clefTransposition 7)))
+                             (format "<clef-octave-change>~A</clef-octave-change>" (/ clefTransposition 7))
+                             ""))
+                       (if doattr (writeln "</attributes>"))
+                       ))))
+
               (writeln "<part id=\"P~A\">" staff)
 
               (for-each
@@ -203,6 +221,7 @@
                    (let ((meter (tree-get musicexport (list measure (ly:make-moment 0) staff 'timesig))))
                      (if (number-pair? meter)
                          (writeln "<time><beats>~A</beats><beat-type>~A</beat-type></time>" (car meter)(cdr meter))))
+                   (writeclef measure (ly:make-moment 0) #f)
                    (writeln "</attributes>")
 
                    (for-each
@@ -212,6 +231,8 @@
                       (for-each
                        (lambda (moment)
                          (let ((music (tree-get musicexport (list measure moment staff voice))))
+                           (if (not (equal? moment (ly:make-moment 0)))
+                               (writeclef measure moment #t))
                            (if (ly:music? music)
                                (let ((dur (ly:music-property music 'duration))
                                      (beam (tree-get musicexport (list measure moment staff voice 'beam)))

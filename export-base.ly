@@ -23,6 +23,9 @@
 %       Copyright Jan-Peter Voigt, 2017                                       %
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% TODO ties, slurs
+
 \version "2.19.58"
 \include "oll-core/package.ily"
 #(use-modules (oll-core scheme tree))
@@ -116,7 +119,7 @@ collectVoice =
          (ly:context-set-property! staff-context 'voice-context-count stvc)
          (set! id stvc)
          (ly:context-set-property! context 'voice-id id)
-         (ly:message "init Voice ~A/~A" (ly:context-property context 'staff-id) id)
+         (ly:message "init Voice ~A/~A (~A)" (ly:context-property context 'staff-id) (ly:context-id context) id)
          ))
       (listeners
        ((StreamEvent engraver event) ; listen to any event

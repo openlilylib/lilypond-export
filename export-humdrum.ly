@@ -23,6 +23,9 @@
 %       Copyright Jan-Peter Voigt, 2017                                       %
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+% TODO ties, slurs
+
 \version "2.19.58"
 \include "export-base.ly"
 
