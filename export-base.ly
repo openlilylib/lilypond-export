@@ -99,7 +99,8 @@ defineContextProperty =
 collectVoice =
 #(lambda (context)
    (let ((id 0)
-         (beam-time '(#f . #f)))
+         (beam-time '(#f . #f))
+         (tuplet-time '(#f . #f)))
      (define (grob-cause grob)
        (cond
         ((ly:grob? grob) (grob-cause (ly:grob-property grob 'cause)))
@@ -115,7 +116,7 @@ collectVoice =
          (ly:context-set-property! staff-context 'voice-context-count stvc)
          (set! id stvc)
          (ly:context-set-property! context 'voice-id id)
-         (ly:message "init collect Voice ~A/~A" (ly:context-property context 'staff-id) id)
+         (ly:message "init Voice ~A/~A" (ly:context-property context 'staff-id) id)
          ))
       (listeners
        ((StreamEvent engraver event) ; listen to any event
@@ -146,8 +147,8 @@ collectVoice =
                        (if (not (integer? scale))
                            (let ((num (numerator scale))
                                  (den (denominator scale)))
-                             (ly:message "scale ~A/~A" num den)
-                             ;(tree-set! musicexport `(,@path tuplet) scale)
+                             ;(ly:message "scale ~A/~A" num den)
+                             (tree-set! musicexport `(,@path scale) scale)
                              )))
                      ; remember current time
                      (ly:event-set-property! event 'timestamp (cons bar moment))
@@ -157,6 +158,12 @@ collectVoice =
                                (equal? (cadr beam-time) bar)
                                (equal? (cddr beam-time) moment)))
                          (set! beam-time (cons (cdr beam-time) (cons bar moment))))
+                     ; track time for tuplets
+                     (if (not (and
+                               (pair? (cdr tuplet-time))
+                               (equal? (cadr tuplet-time) bar)
+                               (equal? (cddr tuplet-time) moment)))
+                         (set! tuplet-time (cons (cdr tuplet-time) (cons bar moment))))
                      ; store music
                      (tree-set! musicexport path music)))
                   ((eq? (ly:music-property music 'name) 'TupletSpanEvent)
@@ -164,10 +171,16 @@ collectVoice =
                          (num (ly:music-property music 'numerator))
                          (den (ly:music-property music 'denominator))
                          (dir (ly:music-property music 'span-direction)))
-                     (ly:message "tuplet ~A:~A ~A ~A ~A" num den timestamp (cons bar moment) dir)
-
-                     ;(tree-set! musicexport `(,@path tuplet) (/ num den))
-                     ))
+                     ;(ly:message "tuplet ~A:~A ~A ~A ~A" num den timestamp (cons bar moment) dir)
+                     (cond
+                      ((and (= -1 dir)(integer? num)(integer? den))
+                       (tree-set! musicexport `(,@path tuplet) `(start . ,(/ num den))))
+                      ((= 1 dir)
+                       (let ((tup-time (cdr tuplet-time)))
+                         ;(ly:message "tuplet time ~A ~A" tup-time (cons bar moment))
+                         (tree-set! musicexport `(,(car tup-time) ,(cdr tup-time) ,@(cddr path) tuplet) `(stop . #f))
+                         ))
+                      )))
                   )))
            ))
        )
@@ -205,7 +218,7 @@ collectVoice =
               (tree-set! musicexport (list (car end-timestamp) (cdr end-timestamp) staff-id voice-id 'beam) 'end)
               ;(ly:message "beam ~A ~A" start-timestamp end-timestamp)
               ))
-           (else (ly:message "Beam ~A" cause))
+           (else (ly:message "Beam? ~A" cause))
            )
           ))
        )
@@ -224,7 +237,7 @@ collectStaff =
          (ly:context-set-property! parent-context 'staff-context-count psc)
          (set! id psc)
          (ly:context-set-property! context 'staff-id id)
-         (ly:message "init collect Staff ~A" id)
+         (ly:message "init Staff ~A" id)
          ))
       (listeners
        ((SetProperty engraver event)
@@ -283,7 +296,7 @@ FileExport =
            \consists #(lambda (context)
                         (make-engraver
                          ((initialize trans)
-                          (ly:message "init export (~A: ~A)" (procedure-name exporter) filename)
+                          (ly:message "init ~A: \"~A\"" (procedure-name exporter) filename)
                           (ly:context-set-property! context 'music-export (tree-create 'music-export))
                           )
                          ((finalize trans)
@@ -291,8 +304,8 @@ FileExport =
                             ; when score is finished, score is exported
                             (tree-set! musicexport '(finaltime)
                               (cons (ly:context-property context 'currentBarNumber) (ly:context-property context 'measurePosition)))
-                            (for-each (lambda (sym) (ly:message "~A: ~A" sym (tree-get musicexport (list sym))))
-                              (filter symbol? (tree-get-keys musicexport '())))
+                            ;(for-each (lambda (sym) (ly:message "~A: ~A" sym (tree-get musicexport (list sym))))
+                            ;  (filter symbol? (tree-get-keys musicexport '())))
                             (exporter musicexport filename)
                             ))
                          ))

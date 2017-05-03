@@ -96,10 +96,19 @@
              (writeln "<normal-notes>~A</normal-notes>" num)
              (writeln "</time-modification>")
              )))
+     (define (writetuplet tuplet)
+       (if (pair? tuplet)
+           (begin
+            (writeln "<notations>")
+            (writeln "<tuplet number=\"1\" placement=\"above\" type=\"~A\" />" (car tuplet))
+            (writeln "</notations>")
+            )))
      (define (writemusic m staff voice . opts)
        (let ((dur (ly:music-property m 'duration))
              (beam (ly:assoc-get 'beam opts))
+             (tuplet (ly:assoc-get 'tuplet opts))
              (moment (ly:assoc-get 'moment opts)))
+
          (case (ly:music-property m 'name)
 
            ((NoteEvent)
@@ -113,7 +122,8 @@
             (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
 
             (if (symbol? beam) (writeln "<beam number=\"1\">~A</beam>" beam))
-            ;(writetimemod dur)
+            (writetimemod dur)
+            (writetuplet tuplet)
             (writeln "</note>"))
 
            ((RestEvent)
@@ -124,7 +134,8 @@
             (writeln "<voice>~A</voice>" voice)
             (writetype dur)
             (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
-            ;(writetimemod dur)
+            (writetimemod dur)
+            (writetuplet tuplet)
             (writeln "</note>"))
 
            ((EventChord)
@@ -142,7 +153,7 @@
 
            )))
 
-     (if (ly:duration? division-dur) (set! divisions (/ 4 (duration-factor division-dur))))
+     (if (ly:duration? division-dur) (set! divisions (/ 64 (duration-factor division-dur))))
      (ly:message "divisions: ~A" divisions)
 
      (tree-walk musicexport '()
@@ -196,18 +207,21 @@
                          (let ((music (tree-get musicexport (list measure moment staff voice))))
                            (if (ly:music? music)
                                (let ((dur (ly:music-property music 'duration))
-                                     (beam (tree-get musicexport (list measure moment staff voice 'beam))))
+                                     (beam (tree-get musicexport (list measure moment staff voice 'beam)))
+                                     (tuplet (tree-get musicexport (list measure moment staff voice 'tuplet))))
                                  (case beam
                                    ((start) (set! beamcont 'continue))
                                    ((end) (set! beamcont #f))
                                    )
+
                                  ; TODO staff grouping!
                                  (writemusic music 1 voice
                                    `(beam . ,(cond
                                               ((eq? 'start beam) 'begin)
                                               ((symbol? beam) beam)
                                               ((symbol? beamcont) beamcont)))
-                                   `(moment . ,moment))
+                                   `(moment . ,moment)
+                                   `(tuplet . ,tuplet))
                                  (if (ly:duration? dur)
                                      (set! backup (+ backup (* (duration-factor dur) divisions))))
                                  ))
