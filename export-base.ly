@@ -31,8 +31,6 @@
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-% TODO ties, slurs
-
 \version "2.19.58"
 \include "oll-core/package.ily"
 #(use-modules (lilypond-export api))

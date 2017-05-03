@@ -31,6 +31,8 @@
 ;%                                                                             %
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+;% TODO ties, slurs
+
 (define-module (lilypond-export api))
 
 (use-modules
