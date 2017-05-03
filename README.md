@@ -7,7 +7,7 @@ create humdrum and musicXML for very simple scores.
 In this first proof of concept a file
 
 ```lilypond
-\version "2.19.60"
+\version "2.19.58"
 \include "export-base.ly" % TODO package.ily!
 
 \runTranslator
