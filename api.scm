@@ -129,7 +129,7 @@
                 (bar (ly:context-property context 'currentBarNumber 1))
                 (moment (ly:context-property context 'measurePosition (ly:make-moment 0))))
             ; notes and rests are stored in the tree under measeure/moment/staff/voice
-            ; TODO MultiMeasureRests!
+            ; TODO MultiMeasureRests, Upbeats
             (if (ly:music? music)
                 (let* ((path (list bar moment
                                (ly:context-property context 'staff-id)
@@ -302,7 +302,7 @@
            (suffix (ly:assoc-get 'filesuffix options (object-property exporter 'file-suffix) #f))
            (filename (ly:assoc-get 'filename options
                        (format "~A.~A"
-                         (ly:parser-output-name)
+                         (ly:assoc-get 'filebase options (ly:parser-output-name) #f)
                          (if (string? suffix) suffix
                              (begin
                               (ly:input-warning (*location*) "no file suffix given!")
