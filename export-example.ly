@@ -51,11 +51,9 @@ music = <<
 
 % TODO wrap run-translator in function
 % exporter can run without actually typesetting
-\runTranslator \music
-\FileExport #`((exporter . ,exportHumdrum)) % TODO more than one output format in one run?
+\exportMusic \default hum \music
 
 opts.exporter = #exportMusicXML
-
 % or as a layout extension that is added to the layout
 \score {
   \music
