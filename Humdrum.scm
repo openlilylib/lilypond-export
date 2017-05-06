@@ -207,7 +207,7 @@
                                         (else #f)))
                                      (format "*k[~A]" (string-join (filter (lambda (v) v) (map acc pitch-alist)) "" 'infix))
                                      )
-                                   "*k[]"))) bar moment))
+                                   "*"))) bar moment))
                          (newline)))
 
                     (display (spline-entry
