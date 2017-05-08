@@ -44,7 +44,54 @@
 ;;; humdrum export
 
 (define-public (exportLilyPond musicexport filename . options)
-  (ly:message "not implemented yet!")
-  )
+  (ly:message "[WIP] not implemented yet!")
+  (let ((grid (tree-create 'grid))
+        (bar-list (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))) )
+        )
+    (tree-walk musicexport '()
+      (lambda (path key value)
+        (if (= 4 (length path))
+            (let ((staff (caddr path))
+                  (voice (cadddr path)))
+              (if (and (integer? staff)(integer? voice))
+                  (tree-set! grid (list staff voice) #t))
+              )
+            )))
+    (with-output-to-file filename
+      (lambda ()
+        (let ((staff-list (sort (tree-get-keys grid (list)) (lambda (a b) (< b a)))))
+          (format #t "\\version \"~A\"" (lilypond-version))(newline)(newline)
 
-(set-object-property! exportLilyPond 'file-suffix "krn")
+          (for-each
+           (lambda (staff)
+             (let ((voice-list (sort (tree-get-keys grid (list staff)) (lambda (a b) (< b a)))))
+
+               (for-each
+                (lambda (voice)
+                  (let ((x 0)) ; dummy
+
+                    (format #t "staff.~A.voice.~A = {" staff voice)(newline)
+
+                    (for-each
+                     (lambda (bar)
+                       (let ((mom-list (sort (tree-get-keys musicexport (list bar)) ly:moment<?)))
+
+                         (for-each
+                          (lambda (moment)
+                            (let ((music (tree-get musicexport (list bar moment staff voice))))
+                              (if (ly:music? music)
+                                  (display (with-output-to-string (lambda () (display-lily-music music)))))
+                              )) mom-list)
+
+                         )) bar-list)
+
+                    (display "}")(newline)
+
+                    )) voice-list)
+
+               )) staff-list)
+
+          )))
+    ))
+
+(set-object-property! exportLilyPond 'file-suffix "export.ly")

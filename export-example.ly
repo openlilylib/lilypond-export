@@ -52,6 +52,7 @@ music = <<
 % TODO wrap run-translator in function
 % exporter can run without actually typesetting
 \exportMusic \default hum \music
+\exportMusic \default lily \music
 
 opts.exporter = #exportMusicXML
 % or as a layout extension that is added to the layout
