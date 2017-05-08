@@ -37,10 +37,12 @@
 
 (use-modules
  (oll-core scheme tree)
+ (lilypond-export lily)
  (lilypond-export MusicXML)
  (lilypond-export Humdrum)
  (lily))
 
+(re-export exportLilyPond)
 (re-export exportMusicXML)
 (re-export exportHumdrum)
 
