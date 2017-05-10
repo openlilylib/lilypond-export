@@ -180,14 +180,17 @@
                          (newline)))
 
                     (if (lor (map number-pair? timesigs))
-                        (begin
+                        (let ((gtimesig (car (filter number-pair? timesigs))))
                          (display
                           (spline-entry
                            (lambda (b m s v)
                              (let ((meta (tree-get musicexport (list b m s 'timesig))))
                                (if (number-pair? meta)
                                    (format "*M~A/~A"
-                                     (car meta)(cdr meta)) "*"))) bar moment))
+                                     (car meta)(cdr meta))
+                                   (format "*M~A/~A"
+                                     (car gtimesig)(cdr gtimesig))
+                                   ))) bar moment))
                          (newline)))
 
                     (if (lor (map (lambda (k) (music-is? k 'KeyChangeEvent)) keysigs))

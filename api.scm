@@ -327,10 +327,17 @@
         (let ((step (ly:context-property context ctprop::export-step))
               (musicexport (ly:context-property context ctprop::music-export))
               (bar (ly:context-property context 'currentBarNumber 1))
-              (moment (ly:context-property context 'measurePosition (ly:make-moment 0))))
-          (ly:context-set-property! context ctprop::export-step #f)
+              (moment (ly:context-property context 'measurePosition (ly:make-moment 0)))
+              (mlen (ly:context-property context 'measureLength)))
+          (ly:context-set-property! context ctprop::export-step #f) ; reset step store
+
           (if (ly:moment<? moment (ly:make-moment 0))
-              (set! bar (1- bar)))
+              (begin
+               (set! bar (1- bar)) ; upbeat / partial
+               ;(set! moment (ly:moment-add mlen moment))
+               ))
+          (tree-set! musicexport (list bar moment 'mlength) mlen)
+
           (if (tree? step)
               (tree-walk step '()
                 (lambda (path xkey value)
@@ -365,6 +372,8 @@
                 ;(moment (ly:context-property context 'measurePosition (ly:make-moment 0)))
                 (staff-id (ly:context-property context ctprop::staff-id)))
            (tree-set! musicstep (list staff-id 'timesig)
+             (cons (ly:event-property event 'numerator)(ly:event-property event 'denominator)))
+           (tree-set! musicstep `(timesig)
              (cons (ly:event-property event 'numerator)(ly:event-property event 'denominator)))
            ))
         )
