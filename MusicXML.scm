@@ -277,7 +277,7 @@
                                     (set! backup (+ backup (* (duration-factor dur) divisions))))
                                 ))
                           )) moment-list)
-                     ) (tree-get-keys grid (list staff)))
+                     ) (sort (tree-get-keys grid (list staff)) (lambda (a b) (< a b))))
 
                   (writeln "</measure>")
                   )) (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))))
