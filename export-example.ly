@@ -36,17 +36,17 @@
 
 music = <<
   \new Staff {
-    \time 3/4
+    \time 3/4 \key es \major 
     \relative <<
-      { c''4. a8 g4 | g( bes) <g b> | \tuplet 3/2 { a c a~ } a | } \\
-      { e8 f g fis e4 | es2 d4 | <c e>2 <c f>4 }
+      { \partial 4 b'4 | c4. a8 g4 | g( bes) <g b> | \tuplet 3/2 { a c a~ } a | } \\
+      { r4 | e8 f g fis e4 | es2 d4 | <c e>2 <c f>4 }
     >>
   }
   \new Staff {
-    \time 3/4 \clef bass
-    \new Voice = "mel" \relative { c'2 c4 | c g b | a2. | }
+    \time 3/4 \clef bass \key es \major
+    \new Voice = "mel" \relative { g4 | c2 c4 | c g b | a2. | }
   }
-  \new Lyrics \lyricsto "mel" { \lyricmode { la le li lu la lo } }
+  \new Lyrics \lyricsto "mel" { \lyricmode { la la le li lu la lo } }
 >>
 
 % TODO wrap run-translator in function
