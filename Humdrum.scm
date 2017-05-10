@@ -181,17 +181,17 @@
 
                     (if (lor (map number-pair? timesigs))
                         (let ((gtimesig (car (filter number-pair? timesigs))))
-                         (display
-                          (spline-entry
-                           (lambda (b m s v)
-                             (let ((meta (tree-get musicexport (list b m s 'timesig))))
-                               (if (number-pair? meta)
-                                   (format "*M~A/~A"
-                                     (car meta)(cdr meta))
-                                   (format "*M~A/~A"
-                                     (car gtimesig)(cdr gtimesig))
-                                   ))) bar moment))
-                         (newline)))
+                          (display
+                           (spline-entry
+                            (lambda (b m s v)
+                              (let ((meta (tree-get musicexport (list b m s 'timesig))))
+                                (if (number-pair? meta)
+                                    (format "*M~A/~A"
+                                      (car meta)(cdr meta))
+                                    (format "*M~A/~A"
+                                      (car gtimesig)(cdr gtimesig))
+                                    ))) bar moment))
+                          (newline)))
 
                     (if (lor (map (lambda (k) (music-is? k 'KeyChangeEvent)) keysigs))
                         (begin
@@ -213,40 +213,47 @@
                                    "*"))) bar moment))
                          (newline)))
 
-                    (display (spline-entry
-                              (lambda (b m s v)
-                                (let ((music (tree-get musicexport (list b m s v))))
-                                  (if (ly:music? music) ; wenn Musik, setzen, sonst '.'
-                                      (let ((dur (ly:music-property music 'duration))
-                                            (tom (ly:music-property music 'name))
-                                            (beam (tree-get musicexport (list b m s v 'beam))))
-                                        ;(ly:message "scale ~A" (ly:duration-scale dur))
-                                        (format "~A~A~A~A"
-                                          (/ (expt 2 (ly:duration-log dur)) (ly:duration-scale dur))
-                                          (cond
-                                           ((= 1 (ly:duration-dot-count dur)) ".")
-                                           ((= 2 (ly:duration-dot-count dur)) "..")
-                                           (else ""))
-                                          (cond
-                                           ((eq? 'NoteEvent tom) (hum-pitch (ly:music-property music 'pitch)))
-                                           ((eq? 'EventChord tom)
-                                            (string-join
-                                             (filter (lambda (v) v)
-                                                     (map
-                                                      (lambda (me) (if (eq? 'NoteEvent (ly:music-property me 'name))
-                                                                       (hum-pitch (ly:music-property me 'pitch)) #f))
-                                                      (ly:music-property music 'elements))) " " 'infix))
-                                           (else "r")
-                                           )
-                                          (cond
-                                           ((eq? 'start beam) "L")
-                                           ((eq? 'end beam) "J")
-                                           (else "")
-                                           )
-                                          ))
-                                      "."))) bar moment))
-
-                    (newline)
+                    (let ((mx (spline-entry
+                               (lambda (b m s v)
+                                 (let ((music (tree-get musicexport (list b m s v))))
+                                   (if (ly:music? music) "m" "")))
+                               bar moment)))
+                      (if (memq #\m (string->list mx)) ; only write lines containing music!
+                          (begin
+                           (display
+                            (spline-entry
+                             (lambda (b m s v)
+                               (let ((music (tree-get musicexport (list b m s v))))
+                                 (if (ly:music? music) ; wenn Musik, setzen, sonst '.'
+                                     (let ((dur (ly:music-property music 'duration))
+                                           (tom (ly:music-property music 'name))
+                                           (beam (tree-get musicexport (list b m s v 'beam))))
+                                       ;(ly:message "scale ~A" (ly:duration-scale dur))
+                                       (format "~A~A~A~A"
+                                         (/ (expt 2 (ly:duration-log dur)) (ly:duration-scale dur))
+                                         (cond
+                                          ((= 1 (ly:duration-dot-count dur)) ".")
+                                          ((= 2 (ly:duration-dot-count dur)) "..")
+                                          (else ""))
+                                         (cond
+                                          ((eq? 'NoteEvent tom) (hum-pitch (ly:music-property music 'pitch)))
+                                          ((eq? 'EventChord tom)
+                                           (string-join
+                                            (filter (lambda (v) v)
+                                                    (map
+                                                     (lambda (me) (if (eq? 'NoteEvent (ly:music-property me 'name))
+                                                                      (hum-pitch (ly:music-property me 'pitch)) #f))
+                                                     (ly:music-property music 'elements))) " " 'infix))
+                                          (else "r")
+                                          )
+                                         (cond
+                                          ((eq? 'start beam) "L")
+                                          ((eq? 'end beam) "J")
+                                          (else "")
+                                          )
+                                         ))
+                                     "."))) bar moment))
+                           (newline))))
                     )) mom-list)
 
 
