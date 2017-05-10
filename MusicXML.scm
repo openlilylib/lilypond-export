@@ -228,15 +228,20 @@
              (for-each
               (lambda (measure)
                 (let ((backup 0)
-                      (beamcont #f))
+                      (beamcont #f)
+                      (moment-list (sort (filter ly:moment? (tree-get-keys musicexport (list measure))) ly:moment<?))
+                      (first-moment (ly:make-moment 0)))
+                  
+                  (if (> (length moment-list) 0) (set! first-moment (car moment-list)))
+                  
                   (writeln "<measure number=\"~A\">" measure)
 
                   (writeln "<attributes>")
                   (writeln "<divisions>~A</divisions>" divisions) ; divisions by measure?
-                  (let ((meter (tree-get musicexport (list measure (ly:make-moment 0) staff 'timesig))))
+                  (let ((meter (tree-get musicexport (list measure first-moment staff 'timesig))))
                     (if (number-pair? meter)
                         (writeln "<time><beats>~A</beats><beat-type>~A</beat-type></time>" (car meter)(cdr meter))))
-                  (writeclef measure (ly:make-moment 0) #f)
+                  (writeclef measure first-moment #f)
                   (writeln "</attributes>")
 
                   (for-each
@@ -271,7 +276,7 @@
                                 (if (ly:duration? dur)
                                     (set! backup (+ backup (* (duration-factor dur) divisions))))
                                 ))
-                          )) (sort (filter ly:moment? (tree-get-keys musicexport (list measure))) ly:moment<?))
+                          )) moment-list)
                      ) (tree-get-keys grid (list staff)))
 
                   (writeln "</measure>")
