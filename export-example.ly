@@ -34,11 +34,11 @@
 \version "2.19.58"
 \include "export-base.ly"
 
-music = <<
+music = \new PianoStaff <<
   \new Staff {
     \time 3/4 \key es \major 
     \relative <<
-      { \partial 4 b'4 | c4. a8 g4 | g( bes) <g b> | \tuplet 3/2 { a c a~ } a | } \\
+      { \partial 4 b'4 | \repeat volta 2 { c4. a8 g4 | g( bes) <g b> | \tuplet 3/2 { a c a~ } a | } } \\
       { r4 | e8 f g fis e4 | es2 d4 | <c e>2 <c f>4 }
     >>
   }

@@ -65,8 +65,10 @@
 
 ((@@ (lily) translator-property-description) ctprop::voice-context-count integer? "Count voice contexts")
 ((@@ (lily) translator-property-description) ctprop::staff-context-count integer? "Count staff contexts")
+((@@ (lily) translator-property-description) ctprop::lyric-context-count integer? "Count staff contexts")
 ((@@ (lily) translator-property-description) ctprop::voice-id integer? "Voice ID")
 ((@@ (lily) translator-property-description) ctprop::staff-id integer? "Staff ID")
+((@@ (lily) translator-property-description) ctprop::lyric-id integer? "Staff ID")
 ((@@ (lily) translator-property-description) ctprop::music-export tree? "Music export store")
 ((@@ (lily) translator-property-description) ctprop::export-step tree? "Music export step store")
 
@@ -299,8 +301,10 @@
                       (voice-id (ly:context-property voice ctprop::voice-id))
                       (bar (ly:context-property context 'currentBarNumber 1))
                       (moment (ly:context-property context 'measurePosition (ly:make-moment 0)))
-                      (lpath (list staff-id voice-id 'lyric)))
-                 (tree-set! musicstep lpath text))
+                      (lpath (list staff-id voice-id 'lyric))
+                      (lyrics (tree-get musicstep lpath)))
+                 (if (not (markup-list? lyrics)) (set! lyrics '()))
+                 (tree-set! musicstep lpath `(,@lyrics ,text)))
                (ly:message "syl ~A" text))
            ))
         )

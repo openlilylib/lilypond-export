@@ -143,10 +143,11 @@
            (if (symbol? beam) (writeln "<beam number=\"1\">~A</beam>" beam))
            (writetimemod dur)
            (writetuplet tuplet)
-           (if (and (not chord) (markup? lyric))
-               (begin
+           (if (and (not chord) (markup-list? lyric))
+               (for-each
+                (lambda (lyric)
                 (writeln "<lyric><syllabic>single</syllabic><text>~A</text></lyric>" lyric)
-                ))
+                ) lyric))
 
            (writeln "</note>"))
 
