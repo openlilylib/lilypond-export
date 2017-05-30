@@ -35,13 +35,13 @@
 \include "export-base.ly"
 
 music = \new PianoStaff <<
-  \new Staff {
-    \time 3/4 \key es \major 
+  \new Staff <<
+    { \time 3/4 \key es \major \set Timing.tempoWholesPerMinute = #(ly:make-moment 30) \partial 4 s4 | \repeat volta 2 { s2.*3 } }
     \relative <<
-      { \partial 4 b'4 | \repeat volta 2 { c4. a8 g4 | g( bes) <g b> | \tuplet 3/2 { a c a~ } a | } } \\
+      { b'4 | c4. a8 g4 | g( bes) <g b> | \tuplet 3/2 { a c a~ } a | } \\
       { r4 | e8 f g fis e4 | es2 d4 | <c e>2 <c f>4 }
     >>
-  }
+  >>
   \new Staff {
     \time 3/4 \clef bass \key es \major
     \new Voice = "mel" \relative { g4 | c2 c4 | c g b | a2. | }
