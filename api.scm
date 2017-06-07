@@ -63,6 +63,8 @@
 (define ctprop::music-export 'music-export)
 (define ctprop::export-step 'music-export-step)
 
+(define ctprop::lyrics 'lyric-events)
+
 ((@@ (lily) translator-property-description) ctprop::voice-context-count integer? "Count voice contexts")
 ((@@ (lily) translator-property-description) ctprop::staff-context-count integer? "Count staff contexts")
 ((@@ (lily) translator-property-description) ctprop::lyric-context-count integer? "Count staff contexts")
@@ -71,6 +73,8 @@
 ((@@ (lily) translator-property-description) ctprop::lyric-id integer? "Staff ID")
 ((@@ (lily) translator-property-description) ctprop::music-export tree? "Music export store")
 ((@@ (lily) translator-property-description) ctprop::export-step tree? "Music export step store")
+
+((@@ (lily) translator-property-description) ctprop::lyrics list? "current lyrics")
 
 ; check name property of music object
 (define-public (music-is? m n) (and (ly:music? m)(eq? n (ly:music-property m 'name))))
@@ -139,6 +143,7 @@
           (ly:context-set-property! context ctprop::export-step (tree-create 'timestep))
           ))
        ((start-translation-timestep trans)
+        (ly:context-set-property! context ctprop::lyrics #f)
         (if (not (tree? (ly:context-property context ctprop::export-step)))
             (ly:context-set-property! context ctprop::export-step (tree-create 'timestep))))
        ((stop-translation-timestep trans)
@@ -309,9 +314,10 @@
                       (bar (ly:context-property context 'currentBarNumber 1))
                       (moment (ly:context-property context 'measurePosition (ly:make-moment 0)))
                       (lpath (list staff-id voice-id 'lyrics))
-                      (lyrics (tree-get musicstep lpath)))
-                 (if (not (list? lyrics)) (set! lyrics '()))
-                 (tree-set! musicstep lpath `(,@lyrics ,text)))
+                      (lyrics (ly:context-property voice ctprop::lyrics)))
+                 (set! lyrics (if (list? lyrics) `(,@lyrics ,text) (list text)))
+                 (tree-set! musicstep lpath lyrics)
+                 (ly:context-set-property! voice ctprop::lyrics lyrics))
                (ly:message "syl ~A" text))
            ))
         )
@@ -421,7 +427,7 @@
           }
           \context {
             \Score
-            % engraver to export tree in foreign format (humdrum)
+            % engraver to export tree in foreign format
             \consists #(lambda (context)
                          (make-engraver
                           ((initialize trans)
@@ -435,6 +441,7 @@
                                (cons (ly:context-property context 'currentBarNumber) (ly:context-property context 'measurePosition)))
                              ;(for-each (lambda (sym) (ly:message "~A: ~A" sym (tree-get musicexport (list sym))))
                              ;  (filter symbol? (tree-get-keys musicexport '())))
+                             ;(tree-display musicexport)
                              (exporter musicexport filename)
                              ))
                           ))

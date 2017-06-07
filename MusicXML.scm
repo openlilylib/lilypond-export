@@ -127,7 +127,7 @@
             (tuplet (ly:assoc-get 'tuplet opts))
             (lyrics (ly:assoc-get 'lyrics opts))
             (moment (ly:assoc-get 'moment opts)))
-
+;(ly:message "-----> lyrics ~A" lyrics)
         (case (ly:music-property m 'name)
 
           ((NoteEvent)
@@ -146,9 +146,9 @@
            (if (and (not chord) (list? lyrics))
                (for-each
                 (lambda (lyric)
-                  (ly:message "~A" lyric)
+                  ;(ly:message "~A" lyric)
                   (writeln "<lyric><syllabic>single</syllabic><text>~A</text></lyric>" lyric)
-                  ) lyric))
+                  ) lyrics))
 
            (writeln "</note>"))
 
@@ -259,7 +259,7 @@
                               (let ((dur (ly:music-property music 'duration))
                                     (beam (tree-get musicexport (list measure moment staff voice 'beam)))
                                     (tuplet (tree-get musicexport (list measure moment staff voice 'tuplet)))
-                                    (lyric (tree-get musicexport (list measure moment staff voice 'lyric)))
+                                    (lyrics (tree-get musicexport (list measure moment staff voice 'lyrics)))
                                     )
                                 (case beam
                                   ((start) (set! beamcont 'continue))
@@ -274,7 +274,7 @@
                                              ((symbol? beamcont) beamcont)))
                                   `(moment . ,moment)
                                   `(tuplet . ,tuplet)
-                                  `(lyric . ,lyric))
+                                  `(lyrics . ,lyrics))
                                 (if (ly:duration? dur)
                                     (set! backup (+ backup (* (duration-factor dur) divisions))))
                                 ))
