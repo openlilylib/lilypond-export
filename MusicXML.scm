@@ -125,7 +125,7 @@
             (chord (ly:assoc-get 'chord opts #f #f))
             (beam (ly:assoc-get 'beam opts))
             (tuplet (ly:assoc-get 'tuplet opts))
-            (lyric (ly:assoc-get 'lyric opts))
+            (lyrics (ly:assoc-get 'lyrics opts))
             (moment (ly:assoc-get 'moment opts)))
 
         (case (ly:music-property m 'name)
@@ -143,11 +143,12 @@
            (if (symbol? beam) (writeln "<beam number=\"1\">~A</beam>" beam))
            (writetimemod dur)
            (writetuplet tuplet)
-           (if (and (not chord) (markup-list? lyric))
+           (if (and (not chord) (list? lyrics))
                (for-each
                 (lambda (lyric)
-                (writeln "<lyric><syllabic>single</syllabic><text>~A</text></lyric>" lyric)
-                ) lyric))
+                  (ly:message "~A" lyric)
+                  (writeln "<lyric><syllabic>single</syllabic><text>~A</text></lyric>" lyric)
+                  ) lyric))
 
            (writeln "</note>"))
 
@@ -232,9 +233,9 @@
                       (beamcont #f)
                       (moment-list (sort (filter ly:moment? (tree-get-keys musicexport (list measure))) ly:moment<?))
                       (first-moment (ly:make-moment 0)))
-                  
+
                   (if (> (length moment-list) 0) (set! first-moment (car moment-list)))
-                  
+
                   (writeln "<measure number=\"~A\">" measure)
 
                   (writeln "<attributes>")

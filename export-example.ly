@@ -47,6 +47,7 @@ music = \new PianoStaff <<
     \new Voice = "mel" \relative { g4 | c2 c4 | c g b | a2. | }
   }
   \new Lyrics \lyricsto "mel" { \lyricmode { la la le li lu la lo } }
+  \new Lyrics \lyricsto "mel" { \lyricmode { ku ka ke ki ku ka ko } }
 >>
 
 % TODO wrap run-translator in function
