@@ -32,7 +32,7 @@
 ;%                                                                             %
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-;% TODO ties, slurs, grace notes
+;% TODO ties, slurs, grace notes, bar lines
 
 (define-module (lilypond-export api))
 
@@ -397,7 +397,8 @@
               (musicexport (ly:context-property context ctprop::music-export))
               (bar (ly:context-property context 'currentBarNumber 1))
               (moment (ly:context-property context 'measurePosition (ly:make-moment 0)))
-              (mlen (ly:context-property context 'measureLength)))
+              (mlen (ly:context-property context 'measureLength))
+              (barline (ly:context-property context 'whichBar)))
           (ly:context-set-property! context ctprop::export-step #f) ; reset step store
 
           (if (ly:moment<? moment (ly:make-moment 0))
@@ -406,12 +407,19 @@
                ;(set! moment (ly:moment-add mlen moment))
                ))
           (tree-set! musicexport (list bar moment 'mlength) mlen)
+          (tree-set! musicexport (list bar moment id 'mlength) mlen)
 
           (if (tree? step)
               (tree-walk step '()
                 (lambda (path xkey value)
                   (tree-set! musicexport `(,bar ,moment ,@path) value)
                   ) '(empty . #f)))
+
+          (if (and (string? barline)(not (equal? "" barline))(not (equal? "|" barline)))
+              (begin
+               (tree-set! musicexport (list bar moment 'barline) barline)
+               (tree-set! musicexport (list bar moment id 'barline) barline)
+               ))
           ))
 
        (listeners
