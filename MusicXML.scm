@@ -31,7 +31,7 @@
 ;%                                                                             %
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-;% TODO ties, slurs
+;% TODO ties, slurs, grace notes
 
 (define-module (lilypond-export MusicXML))
 
@@ -125,9 +125,9 @@
             (chord (ly:assoc-get 'chord opts #f #f))
             (beam (ly:assoc-get 'beam opts))
             (tuplet (ly:assoc-get 'tuplet opts))
-            (lyric (ly:assoc-get 'lyric opts))
+            (lyrics (ly:assoc-get 'lyrics opts))
             (moment (ly:assoc-get 'moment opts)))
-
+;(ly:message "-----> lyrics ~A" lyrics)
         (case (ly:music-property m 'name)
 
           ((NoteEvent)
@@ -143,10 +143,12 @@
            (if (symbol? beam) (writeln "<beam number=\"1\">~A</beam>" beam))
            (writetimemod dur)
            (writetuplet tuplet)
-           (if (and (not chord) (markup? lyric))
-               (begin
-                (writeln "<lyric><syllabic>single</syllabic><text>~A</text></lyric>" lyric)
-                ))
+           (if (and (not chord) (list? lyrics))
+               (for-each
+                (lambda (lyric)
+                  ;(ly:message "~A" lyric)
+                  (writeln "<lyric><syllabic>single</syllabic><text>~A</text></lyric>" lyric)
+                  ) lyrics))
 
            (writeln "</note>"))
 
@@ -231,9 +233,9 @@
                       (beamcont #f)
                       (moment-list (sort (filter ly:moment? (tree-get-keys musicexport (list measure))) ly:moment<?))
                       (first-moment (ly:make-moment 0)))
-                  
+
                   (if (> (length moment-list) 0) (set! first-moment (car moment-list)))
-                  
+
                   (writeln "<measure number=\"~A\">" measure)
 
                   (writeln "<attributes>")
@@ -257,7 +259,7 @@
                               (let ((dur (ly:music-property music 'duration))
                                     (beam (tree-get musicexport (list measure moment staff voice 'beam)))
                                     (tuplet (tree-get musicexport (list measure moment staff voice 'tuplet)))
-                                    (lyric (tree-get musicexport (list measure moment staff voice 'lyric)))
+                                    (lyrics (tree-get musicexport (list measure moment staff voice 'lyrics)))
                                     )
                                 (case beam
                                   ((start) (set! beamcont 'continue))
@@ -272,7 +274,7 @@
                                              ((symbol? beamcont) beamcont)))
                                   `(moment . ,moment)
                                   `(tuplet . ,tuplet)
-                                  `(lyric . ,lyric))
+                                  `(lyrics . ,lyrics))
                                 (if (ly:duration? dur)
                                     (set! backup (+ backup (* (duration-factor dur) divisions))))
                                 ))
