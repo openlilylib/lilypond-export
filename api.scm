@@ -268,7 +268,8 @@
          (let ((musicstep (ly:context-property context ctprop::export-step))
                (staff-id (ly:context-property context ctprop::staff-id))
                (voice-id (ly:context-property context ctprop::voice-id)))
-           (tree-set! musicstep `(,staff-id ,voice-id stem dir) grob) ;(ly:stem::calc-direction grob))
+           (ly:message "stem info ~A" (map car (ly:grob-properties grob)))
+           (tree-set! musicstep `(,staff-id ,voice-id stem dir) (ly:stem::calc-direction grob))
            ))
         )
 
