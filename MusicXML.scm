@@ -31,7 +31,7 @@
 ;%                                                                             %
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-;% TODO ties, slurs
+;% TODO ties, slurs, grace notes
 
 (define-module (lilypond-export MusicXML))
 

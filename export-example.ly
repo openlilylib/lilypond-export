@@ -50,7 +50,6 @@ music = \new PianoStaff <<
   \new Lyrics \lyricsto "mel" { \lyricmode { ku ka ke ki ku ka ko } }
 >>
 
-% TODO wrap run-translator in function
 % exporter can run without actually typesetting
 \exportMusic \default hum \music
 
