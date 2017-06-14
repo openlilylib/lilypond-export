@@ -32,33 +32,18 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \version "2.19.58"
-\include "lilypond-export/package.ily"
+\include "oll-core/package.ily"
+#(use-modules (lilypond-export api))
 
-music = \new PianoStaff <<
-  \new Staff <<
-    { \time 3/4 \key es \major \set Timing.tempoWholesPerMinute = #(ly:make-moment 30) \partial 4 s4 | \repeat volta 2 { s2.*3 } }
-    \relative <<
-      { b'4 | c4. a8 g4 | g( bes) <g b> | \tuplet 3/2 { a c a~ } a | } \\
-      { r4 | e8 f g fis e4 | es2 d4 | <c e>8[ <b dis> <bes d>] <a cis>  <c f>4 }
-    >>
-  >>
-  \new Staff {
-    \time 3/4 \clef bass \key es \major
-    \new Voice = "mel" \relative { g4 | c2 c4 | c g b | a2. | }
-  }
-  \new Lyrics \lyricsto "mel" { \lyricmode { la la le li lu la lo } }
-  \new Lyrics \lyricsto "mel" { \lyricmode { ku ka ke ki ku ka ko } }
->>
+%%%% export music
+% filebase: file basename - suffix (.krn/.xml) is taken from the exporter
+% exporter: function or symbol: hum -> humdrum, xml -> musicXML, not implemented yet: [l]mei -> [L-]MEI
+% music: the music to export
+#(define (symbol-or-procedure? v) (or (symbol? v)(procedure? v)))
+exportMusic =
+#(let ((exporters `((xml . ,exportMusicXML)(hum . ,exportHumdrum)(lily . ,exportLilyPond))))
+   (define-void-function (filebase exporter music)((string? (ly:parser-output-name)) symbol-or-procedure? ly:music?)
+     (if (symbol? exporter) (set! exporter (ly:assoc-get exporter exporters exportMusicXML #t)))
+     (ly:run-translator (ly:score-music (scorify-music music)) (FileExport `((filebase . ,filebase)(exporter . ,exporter)) ))
+     ))
 
-% exporter can run without actually typesetting
-\exportMusic \default hum \music
-
-opts.exporter = #exportMusicXML
-% or as a layout extension that is added to the layout
-\score {
-  \music
-  \layout {
-    \FileExport #opts
-  }
-  \midi {}
-}

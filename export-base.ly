@@ -35,6 +35,9 @@
 \include "oll-core/package.ily"
 #(use-modules (lilypond-export api))
 
+#(ly:warning "deprecated include \"export-base.ly\"!")
+#(ly:warning "do \\include \"lilypond-export/package.ily\"")
+
 %%%% export music
 % filebase: file basename - suffix (.krn/.xml) is taken from the exporter
 % exporter: function or symbol: hum -> humdrum, xml -> musicXML, not implemented yet: [l]mei -> [L-]MEI
