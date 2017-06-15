@@ -37,7 +37,8 @@
 
 %%%% export music
 % filebase: file basename - suffix (.krn/.xml) is taken from the exporter
-% exporter: function or symbol: hum -> humdrum, xml -> musicXML, not implemented yet: [l]mei -> [L-]MEI
+% exporter: symbol or function: hum -> humdrum, xml -> musicXML, not implemented yet: [l]mei -> [L-]MEI, lily -> LilyPond
+%           or an exporter function #(lambda (export-tree filename . options) ...)
 % music: the music to export
 #(define (symbol-or-procedure? v) (or (symbol? v)(procedure? v)))
 exportMusic =
