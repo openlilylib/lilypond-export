@@ -37,7 +37,7 @@
 (define-module (lilypond-export api))
 
 (use-modules
- (oll-core scheme tree)
+ (oll-core tree)
  (lilypond-export lily)
  (lilypond-export MusicXML)
  (lilypond-export Humdrum)
