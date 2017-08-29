@@ -47,4 +47,4 @@
   (ly:message "not implemented yet!")
   )
 
-(set-object-property! exportLilyPond 'file-suffix "krn")
+(set-object-property! exportLilyPond 'file-suffix "ly")
