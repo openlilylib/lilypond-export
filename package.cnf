@@ -1,0 +1,19 @@
+#
+# openLilyLib/edition-engraver configuration
+#
+
+name: lilypond-export
+display-name: LilyPond Export
+short-description: Export LilyPond scores to other formats
+description: <
+  The LilyPond Export module provides an infrastructure to export scores to files of different format.
+  File-Formats are provided as plugins. Current supported formats are MusicXML and Humdrum. MEI shall follow ASAP.
+  >
+oll-core: 0.5.0
+maintainers: [
+  Jan-Peter Voigt <jp.voigt@gmx.de>
+  ]
+version: 0.0.1
+license: GPL3
+website: https://github.com/jpvoigt/lilypond-export
+repository: https://github.com/jpvoigt/lilypond-export.git
