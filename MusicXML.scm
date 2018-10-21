@@ -147,9 +147,9 @@
 
            (writeln "<voice>~A</voice>" voice)
            (writetype dur)
+           (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
            (if accidental
                (writeln "<accidental>~A</accidental>" (acctext accidental)))
-           (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
 
            (if (symbol? beam) (writeln "<beam number=\"1\">~A</beam>" beam))
            (writetimemod dur)
