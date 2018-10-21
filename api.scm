@@ -453,9 +453,9 @@
         ; detect key changes
         ((key-change-event engraver event)
          (let ((musicstep (ly:context-property context ctprop::export-step))
-               (music (ly:event-property event 'music-cause))
+               (key-pitch-alist (ly:event-property event 'pitch-alist))
                (staff-id (ly:context-property context ctprop::staff-id)))
-           (tree-set! musicstep (list staff-id 'keysig) music)
+           (tree-set! musicstep (list staff-id 'key-pitch-alist) key-pitch-alist)
            ))
 
         ; detect time signatures

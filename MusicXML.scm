@@ -71,6 +71,40 @@
             (writeln "<octave>~A</octave>" octave)
             (writeln "</pitch>")
             ) (writeln "<rest />")))
+    (define (writekeyblock pitch-alt)
+      ;; This is alternative to the traditional keys like Gm and F
+      ;; https://usermanuals.musicxml.com/MusicXML/Content/EL-MusicXML-key.htm
+      (let ((notename (list-ref notenames (car pitch-alt)))
+            (alt (cdr pitch-alt)))
+        (writeln "<key-step>~A</key-step>" notename)
+        (writeln "<key-alter>~A</key-alter>" (* 2 alt))
+        (writeln "<key-accidental>~A</key-accidental>" (acctext alt))))
+    (define (fifths pitch-alist)
+      (let ((flats (length (filter (lambda (pa) (= -1/2 (cdr pa))) pitch-alist)))
+            (sharps (length (filter (lambda (pa) (= 1/2 (cdr pa))) pitch-alist)))
+            (others (length (filter (lambda (pa) (and (not (= 1/2 (cdr pa))) (not (= -1/2 (cdr pa))))) pitch-alist))))
+        (cond
+         ((> others 0) #f)
+         ((and (> flats 0) (> sharps 0)) #f)
+         ((> flats 0) (- flats))
+         (else sharps))
+      ))
+    (define (writekey pitch-alist)
+      (if pitch-alist
+          (begin
+            (writeln "<key>")
+            (let ((nz-pa (filter (lambda (p-a) (not (= 0 (cdr p-a)))) pitch-alist)))
+              ;(ly:message "pa list: ~A" nz-pa)
+              (let ((f (fifths nz-pa)))
+                (if f
+                    (begin
+                      (writeln "<fifths>~A</fifths>" f)
+                      (writeln "<mode>~A</mode>" "none") ; mode is none for now
+                      )
+                    (map writekeyblock nz-pa) ; alternative to traditional keys
+                    )))
+            (writeln "</key>")
+      )))
     (define (writeduration dur moment)
       (if (ly:duration? dur)
           (let ((divlen (* (duration-factor dur) divisions))
@@ -257,6 +291,7 @@
 
                   (writeln "<attributes>")
                   (writeln "<divisions>~A</divisions>" divisions) ; divisions by measure?
+                  (writekey (tree-get musicexport (list measure first-moment staff 'key-pitch-alist)))
                   (let ((meter (tree-get musicexport (list measure first-moment staff 'timesig))))
                     (if (number-pair? meter)
                         (writeln "<time><beats>~A</beats><beat-type>~A</beat-type></time>" (car meter)(cdr meter))))
