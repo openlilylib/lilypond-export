@@ -120,9 +120,18 @@
            (writeln "<tuplet number=\"1\" placement=\"above\" type=\"~A\" />" (car tuplet))
            (writeln "</notations>")
            )))
+    (define (acctext accidental)
+      (case accicdental
+        ((0) "natural")
+        ((-1/2) "flat")
+        ((1/2) "sharp")
+        ((-1) "flat-flat")
+        ((1) "double-sharp")
+        (else "")))
     (define (writemusic m staff voice . opts)
       (let ((dur (ly:music-property m 'duration))
             (chord (ly:assoc-get 'chord opts #f #f))
+            (accidental (ly:assoc-get 'accidental opts #f #f))
             (beam (ly:assoc-get 'beam opts))
             (tuplet (ly:assoc-get 'tuplet opts))
             (lyrics (ly:assoc-get 'lyrics opts))
@@ -138,6 +147,8 @@
 
            (writeln "<voice>~A</voice>" voice)
            (writetype dur)
+           (if acccidental
+               (writeln "<accidental>~A</accidental>" (acctext accidental)))
            (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
 
            (if (symbol? beam) (writeln "<beam number=\"1\">~A</beam>" beam))
@@ -258,6 +269,7 @@
                           (if (ly:music? music)
                               (let ((dur (ly:music-property music 'duration))
                                     (beam (tree-get musicexport (list measure moment staff voice 'beam)))
+                                    (accidental (tree-get musicexport (list measure moment staff voice 'accidental)))
                                     (tuplet (tree-get musicexport (list measure moment staff voice 'tuplet)))
                                     (lyrics (tree-get musicexport (list measure moment staff voice 'lyrics)))
                                     )
@@ -272,6 +284,7 @@
                                              ((eq? 'start beam) 'begin)
                                              ((symbol? beam) beam)
                                              ((symbol? beamcont) beamcont)))
+                                  `(accidental . ,accidental)
                                   `(moment . ,moment)
                                   `(tuplet . ,tuplet)
                                   `(lyrics . ,lyrics))

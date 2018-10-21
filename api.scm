@@ -262,6 +262,15 @@
         )
 
        (acknowledgers
+        ; store accidental
+        ((accidental-interface engraver grob source-engraver)
+         (let ((musicexport (ly:context-property context ctprop::music-export))
+              (bar (ly:context-property context 'currentBarNumber 1))
+              (staff-id (ly:context-property context ctprop::staff-id))
+              (voice-id (ly:context-property context ctprop::voice-id))
+              (moment (ly:context-property context 'measurePosition (ly:make-moment 0))))
+           (tree-set! musicexport (list bar moment staff-id voice-id 'accidental) ((ly:grob-property-data grob 'alteration) grob))
+           ))
 
         ; store stem direction
         ((stem-interface engraver grob source-engraver)
@@ -289,8 +298,10 @@
             ((music-is? cause 'NoteEvent)
              (let ((start-timestamp (ly:music-property cause 'timestamp))
                    (end-timestamp (car beam-time)))
-               (tree-set! musicexport (list (car start-timestamp) (cdr start-timestamp) staff-id voice-id 'beam) 'start)
-               (tree-set! musicexport (list (car end-timestamp) (cdr end-timestamp) staff-id voice-id 'beam) 'end)
+               (if (not (null? start-timestamp)) ; this skips grace notes
+                   (tree-set! musicexport (list (car start-timestamp) (cdr start-timestamp) staff-id voice-id 'beam) 'start) )
+               (if (not (null? end-timestamp)) ; this skips grace notes
+                   (tree-set! musicexport (list (car end-timestamp) (cdr end-timestamp) staff-id voice-id 'beam) 'end))
                ;(ly:message "beam ~A ~A" start-timestamp end-timestamp)
                ))
             ((music-is? cause 'BeamEvent)
