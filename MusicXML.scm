@@ -131,7 +131,7 @@
     (define (writemusic m staff voice . opts)
       (let ((dur (ly:music-property m 'duration))
             (chord (ly:assoc-get 'chord opts #f #f))
-            (accidental (ly:assoc-get 'accidental opts #f #f))
+            (pitch-acc (ly:assoc-get 'pitch-acc opts #f #f))
             (beam (ly:assoc-get 'beam opts))
             (tuplet (ly:assoc-get 'tuplet opts))
             (lyrics (ly:assoc-get 'lyrics opts))
@@ -148,8 +148,13 @@
            (writeln "<voice>~A</voice>" voice)
            (writetype dur)
            (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
-           (if accidental
-               (writeln "<accidental>~A</accidental>" (acctext accidental)))
+           (if pitch-acc
+               (let ((pitch (ly:music-property m 'pitch)))
+                 (let ((my-p-a (filter
+                                (lambda (p-a) (and p-a (eqv? pitch (car p-a))))
+                                pitch-acc)))
+                   (if (not (null? my-p-a))
+                       (writeln "<accidental>~A</accidental>" (acctext (cadar my-p-a)))))))
 
            (if (symbol? beam) (writeln "<beam number=\"1\">~A</beam>" beam))
            (writetimemod dur)
@@ -269,7 +274,7 @@
                           (if (ly:music? music)
                               (let ((dur (ly:music-property music 'duration))
                                     (beam (tree-get musicexport (list measure moment staff voice 'beam)))
-                                    (accidental (tree-get musicexport (list measure moment staff voice 'accidental)))
+                                    (pitch-acc (tree-get musicexport (list measure moment staff voice 'pitch-acc)))
                                     (tuplet (tree-get musicexport (list measure moment staff voice 'tuplet)))
                                     (lyrics (tree-get musicexport (list measure moment staff voice 'lyrics)))
                                     )
@@ -284,7 +289,7 @@
                                              ((eq? 'start beam) 'begin)
                                              ((symbol? beam) beam)
                                              ((symbol? beamcont) beamcont)))
-                                  `(accidental . ,accidental)
+                                  `(pitch-acc . ,pitch-acc)
                                   `(moment . ,moment)
                                   `(tuplet . ,tuplet)
                                   `(lyrics . ,lyrics))
