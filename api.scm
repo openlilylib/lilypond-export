@@ -269,7 +269,7 @@
               (staff-id (ly:context-property context ctprop::staff-id))
               (voice-id (ly:context-property context ctprop::voice-id))
               (moment (ly:context-property context 'measurePosition (ly:make-moment 0))))
-           (tree-set! musicexport (list bar moment staff-id voice-id 'accidental) ((ly:grob-property-data grob 'alteration) grob))
+           (tree-set! musicexport (list bar moment staff-id voice-id 'accidental) (accidental-interface::calc-alteration grob))
            ))
 
         ; store stem direction

@@ -121,7 +121,7 @@
            (writeln "</notations>")
            )))
     (define (acctext accidental)
-      (case accicdental
+      (case accidental
         ((0) "natural")
         ((-1/2) "flat")
         ((1/2) "sharp")
@@ -147,7 +147,7 @@
 
            (writeln "<voice>~A</voice>" voice)
            (writetype dur)
-           (if acccidental
+           (if accidental
                (writeln "<accidental>~A</accidental>" (acctext accidental)))
            (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
 
