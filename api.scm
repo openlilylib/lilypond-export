@@ -66,7 +66,7 @@
 (define ctprop::export-step 'music-export-step)
 (define ctprop::lyrics 'lyric-events)
 
-; The use of '@@' indicates bad code style! But how else can we add context properties in external code?
+; The use of '@@' indicates bad coding style! But how else can we add context properties in external code?
 ; add used context-properties
 ((@@ (lily) translator-property-description) ctprop::voice-context-count integer? "Count voice contexts")
 ((@@ (lily) translator-property-description) ctprop::staff-context-count integer? "Count staff contexts")
