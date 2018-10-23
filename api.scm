@@ -40,11 +40,13 @@
 (use-modules
  (oll-core tree)
  (lilypond-export lily)
+ (lilypond-export MEI)
  (lilypond-export MusicXML)
  (lilypond-export Humdrum)
  (lily))
 
 (re-export exportLilyPond)
+(re-export exportMEI)
 (re-export exportMusicXML)
 (re-export exportHumdrum)
 

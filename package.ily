@@ -42,7 +42,7 @@
 % music: the music to export
 #(define (symbol-or-procedure? v) (or (symbol? v)(procedure? v)))
 exportMusic =
-#(let ((exporters `((xml . ,exportMusicXML)(hum . ,exportHumdrum)(lily . ,exportLilyPond))))
+#(let ((exporters `((xml . ,exportMusicXML)(hum . ,exportHumdrum)(mei . ,exportMEI)(lily . ,exportLilyPond))))
    (define-void-function (filebase exporter music)((string? (ly:parser-output-name)) symbol-or-procedure? ly:music?)
      (if (symbol? exporter) (set! exporter (ly:assoc-get exporter exporters exportMusicXML #t)))
      (ly:run-translator (ly:score-music (scorify-music music)) (FileExport `((filebase . ,filebase)(exporter . ,exporter)) ))
