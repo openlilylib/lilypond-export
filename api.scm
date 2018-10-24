@@ -40,11 +40,13 @@
 (use-modules
  (oll-core tree)
  (lilypond-export lily)
+ (lilypond-export MEI)
  (lilypond-export MusicXML)
  (lilypond-export Humdrum)
  (lily))
 
 (re-export exportLilyPond)
+(re-export exportMEI)
 (re-export exportMusicXML)
 (re-export exportHumdrum)
 
@@ -66,7 +68,7 @@
 (define ctprop::export-step 'music-export-step)
 (define ctprop::lyrics 'lyric-events)
 
-; The use of '@@' indicates bad code style! But how else can we add context properties in external code?
+; The use of '@@' indicates bad coding style! But how else can we add context properties in external code?
 ; add used context-properties
 ((@@ (lily) translator-property-description) ctprop::voice-context-count integer? "Count voice contexts")
 ((@@ (lily) translator-property-description) ctprop::staff-context-count integer? "Count staff contexts")
@@ -453,9 +455,9 @@
         ; detect key changes
         ((key-change-event engraver event)
          (let ((musicstep (ly:context-property context ctprop::export-step))
-               (music (ly:event-property event 'music-cause))
+               (key-pitch-alist (ly:event-property event 'pitch-alist))
                (staff-id (ly:context-property context ctprop::staff-id)))
-           (tree-set! musicstep (list staff-id 'keysig) music)
+           (tree-set! musicstep (list staff-id 'key-pitch-alist) key-pitch-alist)
            ))
 
         ; detect time signatures

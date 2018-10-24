@@ -71,6 +71,40 @@
             (writeln "<octave>~A</octave>" octave)
             (writeln "</pitch>")
             ) (writeln "<rest />")))
+    (define (writekeyblock pitch-alt)
+      ;; This is alternative to the traditional keys like Gm and F
+      ;; https://usermanuals.musicxml.com/MusicXML/Content/EL-MusicXML-key.htm
+      (let ((notename (list-ref notenames (car pitch-alt)))
+            (alt (cdr pitch-alt)))
+        (writeln "<key-step>~A</key-step>" notename)
+        (writeln "<key-alter>~A</key-alter>" (* 2 alt))
+        (writeln "<key-accidental>~A</key-accidental>" (acctext alt))))
+    (define (fifths pitch-alist)
+      (let ((flats (length (filter (lambda (pa) (= -1/2 (cdr pa))) pitch-alist)))
+            (sharps (length (filter (lambda (pa) (= 1/2 (cdr pa))) pitch-alist)))
+            (others (length (filter (lambda (pa) (and (not (= 1/2 (cdr pa))) (not (= -1/2 (cdr pa))))) pitch-alist))))
+        (cond
+         ((> others 0) #f)
+         ((and (> flats 0) (> sharps 0)) #f)
+         ((> flats 0) (- flats))
+         (else sharps))
+      ))
+    (define (writekey pitch-alist)
+      (if pitch-alist
+          (begin
+            (writeln "<key>")
+            (let ((nz-pa (filter (lambda (p-a) (not (= 0 (cdr p-a)))) pitch-alist)))
+              ;(ly:message "pa list: ~A" nz-pa)
+              (let ((f (fifths nz-pa)))
+                (if f
+                    (begin
+                      (writeln "<fifths>~A</fifths>" f)
+                      (writeln "<mode>~A</mode>" "none") ; mode is none for now
+                      )
+                    (map writekeyblock nz-pa) ; alternative to traditional keys
+                    )))
+            (writeln "</key>")
+      )))
     (define (writeduration dur moment)
       (if (ly:duration? dur)
           (let ((divlen (* (duration-factor dur) divisions))
@@ -116,11 +150,54 @@
             )))
     (define (writetuplet tuplet)
       (if (pair? tuplet)
+          (writeln "<tuplet number=\"1\" placement=\"above\" type=\"~A\" />" (car tuplet))))
+    (define art-map ; articulations
+      '((accent . accent)
+        (marcato . strong-accent)
+        (portato . detached-legato)
+        (staccatissimo . staccatissimo)
+        (staccato . staccato)
+        (tenuto . tenuto)))
+    (define orn-map ; ornaments
+      '((reverseturn . inverted-turn)
+        (mordent . mordent)
+        (prall . shake)
+        (trill . trill-mark)
+        (turn . turn)))
+    (define onot-map '((fermata . fermata))) ; other notaions
+    (define picker
+      (lambda (the-map)
+        (lambda (artevent)
+          (let ((atype (ly:music-property artevent 'articulation-type)))
+             (if (null? atype)
+                 #f
+                 (let ((art-pair (assq (string->symbol atype) the-map)))
+                   (if art-pair (cdr art-pair) #f)))))))
+    (define (writetag tag) (writeln "<~A/>" tag))
+    (define (writearticulations articulations)
+      (if (not (null? articulations))
+          (let ((arts (filter identity (map (picker art-map) articulations)))
+                (orns (filter identity (map (picker orn-map) articulations)))
+                (onots (filter identity (map (picker onot-map) articulations))))
           (begin
-           (writeln "<notations>")
-           (writeln "<tuplet number=\"1\" placement=\"above\" type=\"~A\" />" (car tuplet))
-           (writeln "</notations>")
-           )))
+            (if (not (null? arts))
+                (begin
+                  (writeln "<articulations>")
+                  (map writetag arts)
+                  (writeln "</articulations>")))
+            (if (not (null? orns))
+                (begin
+                  (writeln "<ornaments>")
+                  (map writetag orns)
+                  (writeln "</ornaments>")))
+            (map writetag onots)))))
+    (define (writenotations tuplet articulations)
+      (if (or (pair? tuplet) (not (null? articulations)))
+          (begin
+            (writeln "<notations>")
+            (writetuplet tuplet)
+            (writearticulations articulations)
+            (writeln "</notations>"))))
     (define (acctext accidental)
       (case accidental
         ((0) "natural")
@@ -135,6 +212,7 @@
             (pitch-acc (ly:assoc-get 'pitch-acc opts #f #f))
             (beam (ly:assoc-get 'beam opts))
             (tuplet (ly:assoc-get 'tuplet opts))
+            (articulations (ly:music-property m 'articulations))
             (lyrics (ly:assoc-get 'lyrics opts))
             (moment (ly:assoc-get 'moment opts)))
 ;(ly:message "-----> lyrics ~A" lyrics)
@@ -145,7 +223,6 @@
            (if chord (writeln "<chord />"))
            (writepitch (ly:music-property m 'pitch))
            (writeduration dur moment)
-
            (writeln "<voice>~A</voice>" voice)
            (writetype dur)
            (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
@@ -159,7 +236,7 @@
 
            (if (symbol? beam) (writeln "<beam number=\"1\">~A</beam>" beam))
            (writetimemod dur)
-           (writetuplet tuplet)
+           (writenotations tuplet articulations)
            (if (and (not chord) (list? lyrics))
                (for-each
                 (lambda (lyric)
@@ -178,7 +255,7 @@
            (writetype dur)
            (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
            (writetimemod dur)
-           (writetuplet tuplet)
+           (writenotations tuplet articulations)
            (writeln "</note>"))
 
           ((EventChord)
@@ -257,6 +334,7 @@
 
                   (writeln "<attributes>")
                   (writeln "<divisions>~A</divisions>" divisions) ; divisions by measure?
+                  (writekey (tree-get musicexport (list measure first-moment staff 'key-pitch-alist)))
                   (let ((meter (tree-get musicexport (list measure first-moment staff 'timesig))))
                     (if (number-pair? meter)
                         (writeln "<time><beats>~A</beats><beat-type>~A</beat-type></time>" (car meter)(cdr meter))))

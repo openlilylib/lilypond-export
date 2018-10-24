@@ -33,18 +33,20 @@
 
 \version "2.19.58"
 \include "oll-core/package.ily"
-#(use-modules (lilypond-export api))
+\loadPackage lilypond-export
+%\include "lilypond-export/package.ily"
 
-%%%% export music
-% filebase: file basename - suffix (.krn/.xml) is taken from the exporter
-% exporter: symbol or function: hum -> humdrum, xml -> musicXML, not implemented yet: [l]mei -> [L-]MEI, lily -> LilyPond
-%           or an exporter function #(lambda (export-tree filename . options) ...)
-% music: the music to export
-#(define (symbol-or-procedure? v) (or (symbol? v)(procedure? v)))
-exportMusic =
-#(let ((exporters `((xml . ,exportMusicXML)(hum . ,exportHumdrum)(mei . ,exportMEI)(lily . ,exportLilyPond))))
-   (define-void-function (filebase exporter music)((string? (ly:parser-output-name)) symbol-or-procedure? ly:music?)
-     (if (symbol? exporter) (set! exporter (ly:assoc-get exporter exporters exportMusicXML #t)))
-     (ly:run-translator (ly:score-music (scorify-music music)) (FileExport `((filebase . ,filebase)(exporter . ,exporter)) ))
-     ))
+music = \new Staff { e'4( d')\prall <c' e' g'>4(\prall <c' f' a'>) }
 
+% exporter can run without actually typesetting ...
+\exportMusic \default hum \music
+
+opts.exporter = #exportMusicXML
+% ... or as a layout extension that is added to the layout
+\score {
+  \music
+  \layout {
+    \FileExport #opts
+  }
+  \midi {}
+}
