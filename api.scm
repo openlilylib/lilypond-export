@@ -190,13 +190,13 @@
                 (musicstep (ly:context-property context ctprop::export-step))
                 (music (ly:event-property event 'music-cause))
                 (bar (ly:context-property context 'currentBarNumber 1))
-                (moment (ly:context-property context 'measurePosition (ly:make-moment 0))))
+                (moment (ly:context-property context 'measurePosition (ly:make-moment 0)))
+                (staff-id (ly:context-property context ctprop::staff-id))
+                (voice-id (ly:context-property context ctprop::voice-id)))
             ; notes and rests are stored in the tree under measeure/moment/staff/voice
             ; TODO MultiMeasureRests, Upbeats
             (if (and (ly:music? music) (= 0 (ly:moment-grace moment))) ; Drop grace notes!
-                (let* ((path (list bar moment
-                               (ly:context-property context ctprop::staff-id)
-                               (ly:context-property context ctprop::voice-id)))
+                (let* ((path (list bar moment staff-id voice-id))
                        (steppath (cddr path))
                        (notes (tree-get musicstep steppath)))
                   (ly:music-set-property! music 'timestamp (cons bar moment))
@@ -241,6 +241,13 @@
 
                       ; store music
                       (tree-set! musicstep steppath music)))
+
+                   ((eq? (ly:music-property music 'name) 'ArticulationEvent)
+                    (let ((art-types (tree-get musicexport (list bar moment staff-id voice-id 'art-types)))
+                          (art-type (ly:music-property music 'articulation-type)))
+                      (tree-set! musicexport (list bar moment staff-id voice-id 'art-types)
+                                 (cons art-type (if art-types art-types '())))
+                      ))
 
                    ((eq? (ly:music-property music 'name) 'TupletSpanEvent)
                     (let ((timestamp (ly:music-property music 'timestamp))
