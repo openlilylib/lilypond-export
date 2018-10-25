@@ -167,36 +167,34 @@
     (define onot-map '((fermata . fermata))) ; other notaions
     (define picker
       (lambda (the-map)
-        (lambda (artevent)
-          (let ((atype (ly:music-property artevent 'articulation-type)))
-             (if (null? atype)
-                 #f
-                 (let ((art-pair (assq (string->symbol atype) the-map)))
-                   (if art-pair (cdr art-pair) #f)))))))
+        (lambda (atype)
+          (if (null? atype)
+              #f
+              (let ((art-pair (assq (string->symbol atype) the-map)))
+                (if art-pair (cdr art-pair) #f))))))
     (define (writetag tag) (writeln "<~A/>" tag))
-    (define (writearticulations articulations)
-      (if (not (null? articulations))
-          (let ((arts (filter identity (map (picker art-map) articulations)))
-                (orns (filter identity (map (picker orn-map) articulations)))
-                (onots (filter identity (map (picker onot-map) articulations))))
-          (begin
-            (if (not (null? arts))
-                (begin
-                  (writeln "<articulations>")
-                  (map writetag arts)
-                  (writeln "</articulations>")))
-            (if (not (null? orns))
-                (begin
-                  (writeln "<ornaments>")
-                  (map writetag orns)
-                  (writeln "</ornaments>")))
-            (map writetag onots)))))
-    (define (writenotations tuplet articulations)
-      (if (or (pair? tuplet) (not (null? articulations)))
+    (define (writearticulations art-types)
+      (let ((arts (filter identity (map (picker art-map) art-types)))
+            (orns (filter identity (map (picker orn-map) art-types)))
+            (onots (filter identity (map (picker onot-map) art-types))))
+        (begin
+          (if (not (null? arts))
+              (begin
+                (writeln "<articulations>")
+                (map writetag arts)
+                (writeln "</articulations>")))
+          (if (not (null? orns))
+              (begin
+                (writeln "<ornaments>")
+                (map writetag orns)
+                (writeln "</ornaments>")))
+          (map writetag onots))))
+    (define (writenotations tuplet art-types)
+      (if (or (pair? tuplet) (not (null? art-types)))
           (begin
             (writeln "<notations>")
             (writetuplet tuplet)
-            (writearticulations articulations)
+            (writearticulations art-types)
             (writeln "</notations>"))))
     (define (acctext accidental)
       (case accidental
@@ -212,7 +210,8 @@
             (pitch-acc (ly:assoc-get 'pitch-acc opts #f #f))
             (beam (ly:assoc-get 'beam opts))
             (tuplet (ly:assoc-get 'tuplet opts))
-            (articulations (ly:music-property m 'articulations))
+            (art-types (map (lambda (e) (ly:music-property e 'articulation-type))
+                            (ly:music-property m 'articulations)))
             (lyrics (ly:assoc-get 'lyrics opts))
             (moment (ly:assoc-get 'moment opts)))
 ;(ly:message "-----> lyrics ~A" lyrics)
@@ -236,7 +235,7 @@
 
            (if (symbol? beam) (writeln "<beam number=\"1\">~A</beam>" beam))
            (writetimemod dur)
-           (writenotations tuplet articulations)
+           (writenotations tuplet art-types)
            (if (and (not chord) (list? lyrics))
                (for-each
                 (lambda (lyric)
@@ -255,7 +254,7 @@
            (writetype dur)
            (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
            (writetimemod dur)
-           (writenotations tuplet articulations)
+           (writenotations tuplet art-types)
            (writeln "</note>"))
 
           ((EventChord)
