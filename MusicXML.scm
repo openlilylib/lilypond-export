@@ -174,27 +174,28 @@
                 (if art-pair (cdr art-pair) #f))))))
     (define (writetag tag) (writeln "<~A/>" tag))
     (define (writearticulations art-types)
-      (let ((arts (filter identity (map (picker art-map) art-types)))
-            (orns (filter identity (map (picker orn-map) art-types)))
-            (onots (filter identity (map (picker onot-map) art-types))))
-        (begin
-          (if (not (null? arts))
-              (begin
-                (writeln "<articulations>")
-                (map writetag arts)
-                (writeln "</articulations>")))
-          (if (not (null? orns))
-              (begin
-                (writeln "<ornaments>")
-                (map writetag orns)
-                (writeln "</ornaments>")))
-          (map writetag onots))))
-    (define (writenotations tuplet art-types)
-      (if (or (pair? tuplet) (not (null? art-types)))
+      (if art-types
+          (let ((arts (filter identity (map (picker art-map) art-types)))
+                (orns (filter identity (map (picker orn-map) art-types)))
+                (onots (filter identity (map (picker onot-map) art-types))))
+            (begin
+              (if (not (null? arts))
+                  (begin
+                    (writeln "<articulations>")
+                    (map writetag arts)
+                    (writeln "</articulations>")))
+              (if (not (null? orns))
+                  (begin
+                    (writeln "<ornaments>")
+                    (map writetag orns)
+                    (writeln "</ornaments>")))
+              (map writetag onots)))))
+    (define (writenotations chord tuplet art-types)
+      (if (or (pair? tuplet) art-types)
           (begin
             (writeln "<notations>")
             (writetuplet tuplet)
-            (writearticulations art-types)
+            (if (not chord) (writearticulations art-types))
             (writeln "</notations>"))))
     (define (acctext accidental)
       (case accidental
@@ -210,8 +211,7 @@
             (pitch-acc (ly:assoc-get 'pitch-acc opts #f #f))
             (beam (ly:assoc-get 'beam opts))
             (tuplet (ly:assoc-get 'tuplet opts))
-            (art-types (map (lambda (e) (ly:music-property e 'articulation-type))
-                            (ly:music-property m 'articulations)))
+            (art-types (ly:assoc-get 'art-types opts #f))
             (lyrics (ly:assoc-get 'lyrics opts))
             (moment (ly:assoc-get 'moment opts)))
 ;(ly:message "-----> lyrics ~A" lyrics)
@@ -235,7 +235,7 @@
 
            (if (symbol? beam) (writeln "<beam number=\"1\">~A</beam>" beam))
            (writetimemod dur)
-           (writenotations tuplet art-types)
+           (writenotations chord tuplet art-types)
            (if (and (not chord) (list? lyrics))
                (for-each
                 (lambda (lyric)
@@ -254,7 +254,7 @@
            (writetype dur)
            (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
            (writetimemod dur)
-           (writenotations tuplet art-types)
+           (writenotations chord tuplet art-types)
            (writeln "</note>"))
 
           ((EventChord)
@@ -353,6 +353,7 @@
                               (let ((dur (ly:music-property music 'duration))
                                     (beam (tree-get musicexport (list measure moment staff voice 'beam)))
                                     (pitch-acc (tree-get musicexport (list measure moment staff voice 'pitch-acc)))
+                                    (art-types (tree-get musicexport (list measure moment staff voice 'art-types)))
                                     (tuplet (tree-get musicexport (list measure moment staff voice 'tuplet)))
                                     (lyrics (tree-get musicexport (list measure moment staff voice 'lyrics)))
                                     )
@@ -368,6 +369,7 @@
                                              ((symbol? beam) beam)
                                              ((symbol? beamcont) beamcont)))
                                   `(pitch-acc . ,pitch-acc)
+                                  `(art-types . ,art-types)
                                   `(moment . ,moment)
                                   `(tuplet . ,tuplet)
                                   `(lyrics . ,lyrics))
