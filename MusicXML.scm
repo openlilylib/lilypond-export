@@ -274,7 +274,8 @@
 
                   (for-each
                    (lambda (voice)
-                     (if (> backup 0) (writeln "<backup><duration>~A</duration></backup>" backup))
+                     (if (> backup 0)
+                         (write-xml `(backup (duration ,backup))))
                      (set! backup 0)
                      (for-each
                       (lambda (moment)
