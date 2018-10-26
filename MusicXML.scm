@@ -232,16 +232,19 @@
                      (clefPosition (tree-get musicexport (list measure moment staff 'clefPosition)))
                      (clefTransposition (tree-get musicexport (list measure moment staff 'clefTransposition))))
                  (if (and (string? clefGlyph)(integer? clefPosition))
-                     (begin
-                      (if doattr (writeln "<attributes>"))
-                      (writeln "<clef><sign>~A</sign><line>~A</line>~A</clef>"
-                        (list-ref (string-split clefGlyph #\.) 1)
-                        (+ 3 (/ clefPosition 2))
-                        (if (and (not (= 0 clefTransposition))(= 0 (modulo clefTransposition 7)))
-                            (format "<clef-octave-change>~A</clef-octave-change>" (/ clefTransposition 7))
-                            ""))
-                      (if doattr (writeln "</attributes>"))
-                      ))))
+                     (let* ((sign (list-ref (string-split clefGlyph #\.) 1))
+                            (line (+ 3 (/ clefPosition 2)))
+                            (octave-change (if (and (not (= 0 clefTransposition))
+                                                    (= 0 (modulo clefTransposition 7)))
+                                               `(clef-octave-change ,(/ clefTransposition 7))
+                                               '()))
+                            (clef-tag `(clef
+                                        (sign ,sign)
+                                        (line ,line)
+                                        ,octave-change
+                                        )))
+                       (if doattr `(attributes ,clef-tag) clef-tag))
+                     '())))
 
              (writeln "<part id=\"P~A\">" staff)
 
@@ -261,7 +264,7 @@
                   (let ((meter (tree-get musicexport (list measure first-moment staff 'timesig))))
                     (if (number-pair? meter)
                         (writeln "<time><beats>~A</beats><beat-type>~A</beat-type></time>" (car meter)(cdr meter))))
-                  (writeclef measure first-moment #f)
+                  (write-xml (writeclef measure first-moment #f))
                   (writeln "</attributes>")
 
                   (for-each
@@ -272,7 +275,7 @@
                       (lambda (moment)
                         (let ((music (tree-get musicexport (list measure moment staff voice))))
                           (if (not (equal? moment (ly:make-moment 0)))
-                              (writeclef measure moment #t))
+                              (write-xml (writeclef measure moment #t)))
                           (if (ly:music? music)
                               (let ((dur (ly:music-property music 'duration))
                                     (beam (tree-get musicexport (list measure moment staff voice 'beam)))
