@@ -250,12 +250,15 @@
 
              (for-each
               (lambda (measure)
-                (let ((backup 0)
-                      (beamcont #f)
-                      (moment-list (sort (filter ly:moment? (tree-get-keys musicexport (list measure))) ly:moment<?))
-                      (first-moment (ly:make-moment 0)))
-
-                  (if (> (length moment-list) 0) (set! first-moment (car moment-list)))
+                (let* ((backup 0)
+                       (beamcont #f)
+                       (unsorted-moments (filter ly:moment?
+                                                 (tree-get-keys musicexport
+                                                   (list measure))))
+                       (moment-list (sort unsorted-moments ly:moment<?))
+                       (first-moment (if (> (length moment-list) 0)
+                                         (car moment-list)
+                                         (ly:make-moment 0))))
 
                   (writeln "<measure number=\"~A\">" measure)
 
