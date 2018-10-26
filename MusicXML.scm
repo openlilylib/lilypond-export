@@ -217,14 +217,13 @@
           (writeln "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
           (writeln "<!DOCTYPE score-partwise PUBLIC \"-//Recordare//DTD MusicXML 3.0 Partwise//EN\" \"http://www.musicxml.org/dtds/partwise.dtd\">")
           (writeln "<score-partwise version=\"3.0\">")
-          (writeln "<part-list>")
-          (for-each
-           (lambda (staff)
-             (writeln "<score-part id=\"P~A\">" staff)
-             (writeln "<part-name>Part ~A</part-name>" staff)
-             (writeln "</score-part>")
-             ) staff-list)
-          (writeln "</part-list>")
+          (write-xml
+           `(part-list
+             ,(map (lambda (staff)
+                     (let ((id (format #f "P~A" staff))
+                           (part-name (format #f "Part ~A" staff)))
+                       `(score-part (@ (id ,id)) (part-name ,part-name))))
+                staff-list)))
 
           (for-each
            (lambda (staff)
