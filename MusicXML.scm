@@ -262,13 +262,15 @@
 
                   (writeln "<measure number=\"~A\">" measure)
 
-                  (writeln "<attributes>")
-                  (writeln "<divisions>~A</divisions>" divisions) ; divisions by measure?
-                  (let ((meter (tree-get musicexport (list measure first-moment staff 'timesig))))
-                    (if (number-pair? meter)
-                        (writeln "<time><beats>~A</beats><beat-type>~A</beat-type></time>" (car meter)(cdr meter))))
-                  (write-xml (writeclef measure first-moment #f))
-                  (writeln "</attributes>")
+                  (write-xml
+                   `(attributes
+                     (divisions ,divisions) ; divisions by measure?
+                     ,(let ((meter (tree-get musicexport
+                                     (list measure first-moment staff 'timesig))))
+                        (if (number-pair? meter)
+                            `(time (beats ,(car meter)) (beat-type ,(cdr meter)))
+                            '()))
+                     ,(writeclef measure first-moment #f)))
 
                   (for-each
                    (lambda (voice)
