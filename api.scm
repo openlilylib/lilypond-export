@@ -249,6 +249,20 @@
                                  (cons art-type (if art-types art-types '())))
                       ))
 
+                   ((eq? (ly:music-property music 'name) 'SlurEvent)
+                    (let ((dir (ly:music-property music 'span-direction)))
+                      (cond
+                       ((= -1 dir)
+                        (let ((slur-start (tree-get musicexport (list bar moment staff-id voice-id 'slur-start))))
+                          (tree-set! musicexport (list bar moment staff-id voice-id 'slur-start)
+                                     (if slur-start (slur-start + 1) 1))
+                          ))
+                       ((= 1 dir)
+                        (let ((slur-stop (tree-get musicexport (list bar moment staff-id voice-id 'slur-stop))))
+                          (tree-set! musicexport (list bar moment staff-id voice-id 'slur-stop)
+                                     (if slur-stop (slur-stop + 1) 1))
+                          )))))
+
                    ((eq? (ly:music-property music 'name) 'TupletSpanEvent)
                     (let ((timestamp (ly:music-property music 'timestamp))
                           (num (ly:music-property music 'numerator))
