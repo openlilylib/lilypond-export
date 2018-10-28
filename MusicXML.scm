@@ -39,6 +39,7 @@
 (use-modules
  (oll-core tree)
  (lilypond-export api)
+ (lilypond-export sxml-to-xml)
  (lily))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -60,25 +61,29 @@
     (define notenames '(C D E F G A B))
     (define types '(breve breve whole half quarter eighth 16th 32nd 64th 128th))
     (define (writeln x . args) (if (> (length args) 0) (apply format #t x args)(display x))(newline))
+
+    (define (write-xml sxml)
+      (sxml->xml sxml)
+      (newline))
+
     (define (writepitch p)
       (if (ly:pitch? p)
           (let ((notename (list-ref notenames (ly:pitch-notename p)))
                 (alter (* 2 (ly:pitch-alteration p)))
                 (octave (+ 4 (ly:pitch-octave p))))
-            (writeln "<pitch>")
-            (writeln "<step>~A</step>" notename)
-            (if (not (= 0 alter)) (writeln "<alter>~A</alter>" alter))
-            (writeln "<octave>~A</octave>" octave)
-            (writeln "</pitch>")
-            ) (writeln "<rest />")))
+            `(pitch
+              (step ,notename)
+              ,(if (not (= 0 alter)) `(alter ,alter) '())
+              (octave ,octave)))
+          '(rest)))
     (define (writekeyblock pitch-alt)
       ;; This is alternative to the traditional keys like Gm and F
       ;; https://usermanuals.musicxml.com/MusicXML/Content/EL-MusicXML-key.htm
       (let ((notename (list-ref notenames (car pitch-alt)))
             (alt (cdr pitch-alt)))
-        (writeln "<key-step>~A</key-step>" notename)
-        (writeln "<key-alter>~A</key-alter>" (* 2 alt))
-        (writeln "<key-accidental>~A</key-accidental>" (acctext alt))))
+        `((key-step ,notename)
+          (key-alter ,(* 2 alt))
+          (key-accidental ,(acctext alt)))))
     (define (fifths pitch-alist)
       (let ((flats (length (filter (lambda (pa) (= -1/2 (cdr pa))) pitch-alist)))
             (sharps (length (filter (lambda (pa) (= 1/2 (cdr pa))) pitch-alist)))
@@ -91,20 +96,14 @@
       ))
     (define (writekey pitch-alist)
       (if pitch-alist
-          (begin
-            (writeln "<key>")
-            (let ((nz-pa (filter (lambda (p-a) (not (= 0 (cdr p-a)))) pitch-alist)))
-              ;(ly:message "pa list: ~A" nz-pa)
-              (let ((f (fifths nz-pa)))
-                (if f
-                    (begin
-                      (writeln "<fifths>~A</fifths>" f)
-                      (writeln "<mode>~A</mode>" "none") ; mode is none for now
-                      )
-                    (map writekeyblock nz-pa) ; alternative to traditional keys
-                    )))
-            (writeln "</key>")
-      )))
+          `(key
+            ,(let ((nz-pa (filter (lambda (p-a) (not (= 0 (cdr p-a)))) pitch-alist)))
+               (let ((f (fifths nz-pa)))
+                 (if f
+                     `((fifths ,f) (mode "none"))
+                     (map writekeyblock nz-pa) ; alternative to traditional keys
+                     ))))
+          '()))
     (define (writeduration dur moment)
       (if (ly:duration? dur)
           (let ((divlen (* (duration-factor dur) divisions))
@@ -132,25 +131,30 @@
                   ;(ly:message "time: ~A:~A ... ~A" num den rest)
                   (set! divlen dur)
                   ))
-            (writeln "<duration>~A</duration>" divlen)
+            `(duration ,divlen)
             )))
     (define (writetype dur)
       (if (ly:duration? dur)
-          (writeln "<type>~A</type>" (list-ref types (+ 2 (ly:duration-log dur))))
-          ))
-    (define (writedots d) (if (> d 0) (begin (writeln "<dot/>")(writedots (1- d)))))
+          `(type ,(list-ref types (+ 2 (ly:duration-log dur))))
+          '()))
+    (define (writedots d)
+      (if (> d 0)
+          (cons '(dot) (writedots (1- d)))
+          '()))
     (define (writetimemod dur)
       (if (and (ly:duration? dur) (not (integer? (ly:duration-scale dur))))
           (let ((num (numerator (ly:duration-scale dur)))
                 (den (denominator (ly:duration-scale dur))))
-            (writeln "<time-modification>")
-            (writeln "<actual-notes>~A</actual-notes>" den)
-            (writeln "<normal-notes>~A</normal-notes>" num)
-            (writeln "</time-modification>")
-            )))
+            `(time-modification
+              (actual-notes ,den)
+              (normal-notes ,num)))
+          '()))
     (define (writetuplet tuplet)
       (if (pair? tuplet)
-          (writeln "<tuplet number=\"1\" placement=\"above\" type=\"~A\" />" (car tuplet))))
+          `(notations (tuplet (@ (number 1)
+                                (placement "above")
+                                (type ,(car tuplet)))))
+          '()))
     (define art-map ; articulations
       '((accent . accent)
         (marcato . strong-accent)
@@ -172,40 +176,37 @@
               #f
               (let ((art-pair (assq (string->symbol atype) the-map)))
                 (if art-pair (cdr art-pair) #f))))))
-    (define (writetag tag) (writeln "<~A/>" tag))
+    (define (writetag t) `(,t))
     (define (writearticulations art-types)
       (if art-types
           (let ((arts (filter identity (map (picker art-map) art-types)))
                 (orns (filter identity (map (picker orn-map) art-types)))
                 (onots (filter identity (map (picker onot-map) art-types))))
-            (begin
-              (if (not (null? arts))
-                  (begin
-                    (writeln "<articulations>")
-                    (map writetag arts)
-                    (writeln "</articulations>")))
-              (if (not (null? orns))
-                  (begin
-                    (writeln "<ornaments>")
-                    (map writetag orns)
-                    (writeln "</ornaments>")))
-              (map writetag onots)))))
+            ;;(ly:message "ARTS ~A" arts)
+            `(
+              ,(if (not (null? arts)) `(articulations ,(map writetag arts)) '())
+              ,(if (not (null? orns)) `(ornaments ,(map writetag orns)) '())
+              ,(map writetag onots)))
+          '()))
     (define (writeslurs stype num)
       (if (and num (> num 0))
-          (begin
-            (writeln "<slur number=\"~A\" type=\"~A\"/>" num stype)
-            (writeslurs stype (- num 1)))))
+          (cons
+            `(slur (@ (number ,num)
+                      (type ,stype)))
+            (writeslurs stype (- num 1)))
+          '()))
     (define (writenotations chord tuplet art-types slur-start slur-stop)
       (if (or (pair? tuplet) (and (not chord) (or art-types slur-start slur-stop)))
-          (begin
-            (writeln "<notations>")
-            (writetuplet tuplet)
-            (if (not chord)
-                (begin
-                  (writearticulations art-types)
-                  (writeslurs 'start slur-start)
-                  (writeslurs 'stop slur-stop)))
-            (writeln "</notations>"))))
+          `(notations
+            ,(writetuplet tuplet)
+            ;;(ly:message "WA ~A" (writearticulations art-types))
+            ,(if chord
+                 '()
+                 `(
+                   ,(writearticulations art-types)
+                   ,(writeslurs 'start slur-start)
+                   ,(writeslurs 'stop slur-stop))))
+          '()))
     (define (acctext accidental)
       (case accidental
         ((0) "natural")
@@ -225,48 +226,53 @@
             (art-types (ly:assoc-get 'art-types opts #f))
             (lyrics (ly:assoc-get 'lyrics opts))
             (moment (ly:assoc-get 'moment opts)))
-;(ly:message "-----> lyrics ~A" lyrics)
+        ;(ly:message "-----> lyrics ~A" lyrics)
         (case (ly:music-property m 'name)
 
           ((NoteEvent)
-           (writeln "<note>")
-           (if chord (writeln "<chord />"))
-           (writepitch (ly:music-property m 'pitch))
-           (writeduration dur moment)
-           (writeln "<voice>~A</voice>" voice)
-           (writetype dur)
-           (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
-           (if pitch-acc
-               (let ((pitch (ly:music-property m 'pitch)))
-                 (let ((my-p-a (filter
-                                (lambda (p-a) (and p-a (eqv? pitch (car p-a))))
-                                pitch-acc)))
-                   (if (not (null? my-p-a))
-                       (writeln "<accidental>~A</accidental>" (acctext (cadar my-p-a)))))))
-
-           (if (symbol? beam) (writeln "<beam number=\"1\">~A</beam>" beam))
-           (writetimemod dur)
-           (writenotations chord tuplet art-types slur-start slur-stop)
-           (if (and (not chord) (list? lyrics))
-               (for-each
-                (lambda (lyric)
-                  ;(ly:message "~A" lyric)
-                  (writeln "<lyric><syllabic>single</syllabic><text>~A</text></lyric>" lyric)
-                  ) lyrics))
-
-           (writeln "</note>"))
+           (write-xml
+            `(note
+              ,(if chord '(chord) '())
+              ,(writepitch (ly:music-property m 'pitch))
+              ,(writeduration dur moment)
+              (voice ,voice)
+              ,(writetype dur)
+              ,(writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
+              ,(if pitch-acc
+                   (let ((pitch (ly:music-property m 'pitch)))
+                     (let ((my-p-a (filter
+                                    (lambda (p-a) (and p-a (eqv? pitch (car p-a))))
+                                    pitch-acc)))
+                       (if (not (null? my-p-a))
+                           `(accidental ,(acctext (cadar my-p-a)))
+                           '())))
+                   '())
+              ,(if (symbol? beam)
+                   `(beam (@ (number 1)) ,beam)
+                   '())
+              ,(writetimemod dur)
+              ,(writenotations chord tuplet art-types slur-start slur-stop)
+              ,(if (and (not chord) (list? lyrics))
+                   (map (lambda (lyric)
+                          ;(ly:message "~A" lyric)
+                          `(lyric
+                            (syllabic "single")
+                            (text ,lyric)))
+                     lyrics)
+                   '())
+              )))
 
           ((RestEvent)
-           (writeln "<note>")
-           (writeln "<rest />")
-           (writeduration dur moment)
-
-           (writeln "<voice>~A</voice>" voice)
-           (writetype dur)
-           (writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
-           (writetimemod dur)
-           (writenotations chord tuplet art-types slur-start slur-stop)
-           (writeln "</note>"))
+           (write-xml
+            `(note
+              (rest)
+              ,(writeduration dur moment)
+              (voice ,voice)
+              ,(writetype dur)
+              ,(writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
+              ,(writetimemod dur)
+              ,(writenotations chord tuplet art-types slur-start slur-stop)
+              )))
 
           ((EventChord)
            (let* ((elements (ly:music-property m 'elements))
@@ -302,14 +308,13 @@
           (writeln "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
           (writeln "<!DOCTYPE score-partwise PUBLIC \"-//Recordare//DTD MusicXML 3.0 Partwise//EN\" \"http://www.musicxml.org/dtds/partwise.dtd\">")
           (writeln "<score-partwise version=\"3.0\">")
-          (writeln "<part-list>")
-          (for-each
-           (lambda (staff)
-             (writeln "<score-part id=\"P~A\">" staff)
-             (writeln "<part-name>Part ~A</part-name>" staff)
-             (writeln "</score-part>")
-             ) staff-list)
-          (writeln "</part-list>")
+          (write-xml
+           `(part-list
+             ,(map (lambda (staff)
+                     (let ((id (format #f "P~A" staff))
+                           (part-name (format #f "Part ~A" staff)))
+                       `(score-part (@ (id ,id)) (part-name ,part-name))))
+                staff-list)))
 
           (for-each
            (lambda (staff)
@@ -318,48 +323,57 @@
                      (clefPosition (tree-get musicexport (list measure moment staff 'clefPosition)))
                      (clefTransposition (tree-get musicexport (list measure moment staff 'clefTransposition))))
                  (if (and (string? clefGlyph)(integer? clefPosition))
-                     (begin
-                      (if doattr (writeln "<attributes>"))
-                      (writeln "<clef><sign>~A</sign><line>~A</line>~A</clef>"
-                        (list-ref (string-split clefGlyph #\.) 1)
-                        (+ 3 (/ clefPosition 2))
-                        (if (and (not (= 0 clefTransposition))(= 0 (modulo clefTransposition 7)))
-                            (format "<clef-octave-change>~A</clef-octave-change>" (/ clefTransposition 7))
-                            ""))
-                      (if doattr (writeln "</attributes>"))
-                      ))))
+                     (let* ((sign (list-ref (string-split clefGlyph #\.) 1))
+                            (line (+ 3 (/ clefPosition 2)))
+                            (octave-change (if (and (not (= 0 clefTransposition))
+                                                    (= 0 (modulo clefTransposition 7)))
+                                               `(clef-octave-change ,(/ clefTransposition 7))
+                                               '()))
+                            (clef-tag `(clef
+                                        (sign ,sign)
+                                        (line ,line)
+                                        ,octave-change
+                                        )))
+                       (if doattr `(attributes ,clef-tag) clef-tag))
+                     '())))
 
              (writeln "<part id=\"P~A\">" staff)
 
              (for-each
               (lambda (measure)
-                (let ((backup 0)
-                      (beamcont #f)
-                      (moment-list (sort (filter ly:moment? (tree-get-keys musicexport (list measure))) ly:moment<?))
-                      (first-moment (ly:make-moment 0)))
-
-                  (if (> (length moment-list) 0) (set! first-moment (car moment-list)))
+                (let* ((backup 0)
+                       (beamcont #f)
+                       (unsorted-moments (filter ly:moment?
+                                                 (tree-get-keys musicexport
+                                                   (list measure))))
+                       (moment-list (sort unsorted-moments ly:moment<?))
+                       (first-moment (if (> (length moment-list) 0)
+                                         (car moment-list)
+                                         (ly:make-moment 0))))
 
                   (writeln "<measure number=\"~A\">" measure)
 
-                  (writeln "<attributes>")
-                  (writeln "<divisions>~A</divisions>" divisions) ; divisions by measure?
-                  (writekey (tree-get musicexport (list measure first-moment staff 'key-pitch-alist)))
-                  (let ((meter (tree-get musicexport (list measure first-moment staff 'timesig))))
-                    (if (number-pair? meter)
-                        (writeln "<time><beats>~A</beats><beat-type>~A</beat-type></time>" (car meter)(cdr meter))))
-                  (writeclef measure first-moment #f)
-                  (writeln "</attributes>")
+                  (write-xml
+                   `(attributes
+                     (divisions ,divisions) ; divisions by measure?
+                     ,(writekey (tree-get musicexport (list measure first-moment staff 'key-pitch-alist)))
+                     ,(let ((meter (tree-get musicexport
+                                     (list measure first-moment staff 'timesig))))
+                        (if (number-pair? meter)
+                            `(time (beats ,(car meter)) (beat-type ,(cdr meter)))
+                            '()))
+                     ,(writeclef measure first-moment #f)))
 
                   (for-each
                    (lambda (voice)
-                     (if (> backup 0) (writeln "<backup><duration>~A</duration></backup>" backup))
+                     (if (> backup 0)
+                         (write-xml `(backup (duration ,backup))))
                      (set! backup 0)
                      (for-each
                       (lambda (moment)
                         (let ((music (tree-get musicexport (list measure moment staff voice))))
                           (if (not (equal? moment (ly:make-moment 0)))
-                              (writeclef measure moment #t))
+                              (write-xml (writeclef measure moment #t)))
                           (if (ly:music? music)
                               (let ((dur (ly:music-property music 'duration))
                                     (beam (tree-get musicexport (list measure moment staff voice 'beam)))
