@@ -105,7 +105,7 @@
                    )))
           '()))
     (define (writeduration dur moment)
-      (if (ly:duration? dur)
+      (if (and (ly:duration? dur) (= 0 (ly:moment-grace moment)))
           (let ((divlen (* (duration-factor dur) divisions))
                 (divmom (* divisions 4 (ly:moment-main moment)))
                 (addskew 0))
@@ -132,7 +132,8 @@
                   (set! divlen dur)
                   ))
             `(duration ,divlen)
-            )))
+            )
+          '()))
     (define (writetype dur)
       (if (ly:duration? dur)
           `(type ,(list-ref types (+ 2 (ly:duration-log dur))))
@@ -228,6 +229,7 @@
            (write-xml
             `(note
               ,(if chord '(chord) '())
+              ,(if (= 0 (ly:moment-grace moment)) '() '(grace))
               ,(writepitch (ly:music-property m 'pitch))
               ,(writeduration dur moment)
               (voice ,voice)
