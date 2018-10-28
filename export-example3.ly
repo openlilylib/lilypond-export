@@ -36,7 +36,7 @@
 \loadPackage lilypond-export
 %\include "lilypond-export/package.ily"
 
-music = \new Staff { e'4( d')\prall <c' e' g'>4(\prall <c' f' a'>) }
+music = \new Staff { e'4( d')\trill <c' e' g'>4(\prall <c' f' a'>) c'8_[ d' e' f'] }
 
 % exporter can run without actually typesetting ...
 \exportMusic \default hum \music
