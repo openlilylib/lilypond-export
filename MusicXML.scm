@@ -96,13 +96,13 @@
       ))
     (define (writekey pitch-alist)
       (if pitch-alist
-          `(key
-            ,(let ((nz-pa (filter (lambda (p-a) (not (= 0 (cdr p-a)))) pitch-alist)))
-               (let ((f (fifths nz-pa)))
-                 (if f
-                     `((fifths ,f) (mode "none"))
-                     (map writekeyblock nz-pa) ; alternative to traditional keys
-                     ))))
+          (let* ((non-zero-pitch-alts (filter (lambda (p-a) (not (= 0 (cdr p-a)))) pitch-alist))
+                 (fifths-val (fifths non-zero-pitch-alts)))
+            `(key
+              ,(if fifths-val
+                   `((fifths ,fifths-val) (mode "none"))
+                   (map writekeyblock non-zero-pitch-alts) ; alternative to traditional keys
+                   )))
           '()))
     (define (writeduration dur moment)
       (if (ly:duration? dur)
@@ -151,9 +151,9 @@
           '()))
     (define (writetuplet tuplet)
       (if (pair? tuplet)
-          `(notations (tuplet (@ (number 1)
-                                (placement "above")
-                                (type ,(car tuplet)))))
+          `(tuplet (@ (number 1)
+                      (placement "above")
+                      (type ,(car tuplet))))
           '()))
     (define art-map ; articulations
       '((accent . accent)
@@ -176,17 +176,15 @@
               #f
               (let ((art-pair (assq (string->symbol atype) the-map)))
                 (if art-pair (cdr art-pair) #f))))))
-    (define (writetag t) `(,t))
     (define (writearticulations art-types)
       (if art-types
           (let ((arts (filter identity (map (picker art-map) art-types)))
                 (orns (filter identity (map (picker orn-map) art-types)))
                 (onots (filter identity (map (picker onot-map) art-types))))
-            ;;(ly:message "ARTS ~A" arts)
             `(
-              ,(if (not (null? arts)) `(articulations ,(map writetag arts)) '())
-              ,(if (not (null? orns)) `(ornaments ,(map writetag orns)) '())
-              ,(map writetag onots)))
+              ,(if (not (null? arts)) `(articulations ,(map list arts)) '())
+              ,(if (not (null? orns)) `(ornaments ,(map list orns)) '())
+              ,(map list onots)))
           '()))
     (define (writeslurs stype num)
       (if (and num (> num 0))
@@ -199,11 +197,9 @@
       (if (or (pair? tuplet) (and (not chord) (or art-types slur-start slur-stop)))
           `(notations
             ,(writetuplet tuplet)
-            ;;(ly:message "WA ~A" (writearticulations art-types))
             ,(if chord
                  '()
-                 `(
-                   ,(writearticulations art-types)
+                 `(,(writearticulations art-types)
                    ,(writeslurs 'start slur-start)
                    ,(writeslurs 'stop slur-stop))))
           '()))
@@ -239,13 +235,13 @@
               ,(writetype dur)
               ,(writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
               ,(if pitch-acc
-                   (let ((pitch (ly:music-property m 'pitch)))
-                     (let ((my-p-a (filter
-                                    (lambda (p-a) (and p-a (eqv? pitch (car p-a))))
-                                    pitch-acc)))
-                       (if (not (null? my-p-a))
-                           `(accidental ,(acctext (cadar my-p-a)))
-                           '())))
+                   (let* ((pitch (ly:music-property m 'pitch))
+                          (my-p-a (filter
+                                   (lambda (p-a) (and p-a (eqv? pitch (car p-a))))
+                                   pitch-acc)))
+                     (if (not (null? my-p-a))
+                         `(accidental ,(acctext (cadar my-p-a)))
+                         '()))
                    '())
               ,(if (symbol? beam)
                    `(beam (@ (number 1)) ,beam)
