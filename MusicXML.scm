@@ -188,10 +188,9 @@
           '()))
     (define (writeslurs stype num)
       (if (and num (> num 0))
-          (cons
-            `(slur (@ (number ,num)
-                      (type ,stype)))
-            (writeslurs stype (- num 1)))
+          `((slur (@ (number ,num)
+                     (type ,stype)))
+            ,(writeslurs stype (- num 1)))
           '()))
     (define (writenotations chord tuplet art-types slur-start slur-stop)
       (if (or (pair? tuplet) (and (not chord) (or art-types slur-start slur-stop)))
