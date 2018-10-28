@@ -68,7 +68,7 @@
       (sxml->xml sxml)
       (newline))
 
-    (define (writepitch p)
+    (define (make-pitch p)
       (if (ly:pitch? p)
           (let ((notename (list-ref notenames (ly:pitch-notename p)))
                 (alter (* 2 (ly:pitch-alteration p)))
@@ -78,7 +78,7 @@
               ,(if (not (= 0 alter)) `(alter ,alter) '())
               (octave ,octave)))
           '(rest)))
-    (define (writekeyblock pitch-alt)
+    (define (make-keyblock pitch-alt)
       ;; This is alternative to the traditional keys like Gm and F
       ;; https://usermanuals.musicxml.com/MusicXML/Content/EL-MusicXML-key.htm
       (let ((notename (list-ref notenames (car pitch-alt)))
@@ -96,17 +96,17 @@
          ((> flats 0) (- flats))
          (else sharps))
       ))
-    (define (writekey pitch-alist)
+    (define (make-key pitch-alist)
       (if pitch-alist
           (let* ((non-zero-pitch-alts (filter (lambda (p-a) (not (= 0 (cdr p-a)))) pitch-alist))
                  (fifths-val (fifths non-zero-pitch-alts)))
             `(key
               ,(if fifths-val
                    `((fifths ,fifths-val) (mode "none"))
-                   (map writekeyblock non-zero-pitch-alts) ; alternative to traditional keys
+                   (map make-keyblock non-zero-pitch-alts) ; alternative to traditional keys
                    )))
           '()))
-    (define (writeduration dur moment)
+    (define (make-duration dur moment)
       (if (and (ly:duration? dur) (= 0 (ly:moment-grace moment)))
           (let ((divlen (* (duration-factor dur) divisions))
                 (divmom (* divisions 4 (ly:moment-main moment)))
@@ -136,15 +136,15 @@
             `(duration ,divlen)
             )
           '()))
-    (define (writetype dur)
+    (define (make-type dur)
       (if (ly:duration? dur)
           `(type ,(list-ref types (+ 2 (ly:duration-log dur))))
           '()))
-    (define (writedots d)
+    (define (make-dots d)
       (if (> d 0)
-          (cons '(dot) (writedots (1- d)))
+          (cons '(dot) (make-dots (1- d)))
           '()))
-    (define (writetimemod dur)
+    (define (make-timemod dur)
       (if (and (ly:duration? dur) (not (integer? (ly:duration-scale dur))))
           (let ((num (numerator (ly:duration-scale dur)))
                 (den (denominator (ly:duration-scale dur))))
@@ -152,7 +152,7 @@
               (actual-notes ,den)
               (normal-notes ,num)))
           '()))
-    (define (writetuplet tuplet)
+    (define (make-tuplet tuplet)
       (if (pair? tuplet)
           `(tuplet (@ (number 1)
                       (placement "above")
@@ -179,7 +179,7 @@
               #f
               (let ((art-pair (assq (string->symbol atype) the-map)))
                 (if art-pair (cdr art-pair) #f))))))
-    (define (writearticulations art-types)
+    (define (make-articulations art-types)
       (if art-types
           (let ((arts (filter identity (map (picker art-map) art-types)))
                 (orns (filter identity (map (picker orn-map) art-types)))
@@ -189,7 +189,7 @@
               ,(if (not (null? orns)) `(ornaments ,(map list orns)) '())
               ,(map list onots)))
           '()))
-    (define (writeslurs stype num)
+    (define (make-slurs stype num)
       (if (and num (> num 0))
           (let ((current-slur
                  (if (eqv? stype 'start)
@@ -207,18 +207,18 @@
             (if current-slur
                 `((slur (@ (number ,current-slur)
                            (type ,stype)))
-                  ,(writeslurs stype (- num 1)))
+                  ,(make-slurs stype (- num 1)))
                 '()))
           '()))
-    (define (writenotations chord tuplet art-types slur-start slur-stop)
+    (define (make-notations chord tuplet art-types slur-start slur-stop)
       (if (or (pair? tuplet) (and (not chord) (or art-types slur-start slur-stop)))
           `(notations
-            ,(writetuplet tuplet)
+            ,(make-tuplet tuplet)
             ,(if chord
                  '()
-                 `(,(writearticulations art-types)
-                   ,(writeslurs 'start slur-stop)
-                   ,(writeslurs 'stop slur-start))))
+                 `(,(make-articulations art-types)
+                   ,(make-slurs 'start slur-stop)
+                   ,(make-slurs 'stop slur-start))))
           '()))
     (define (acctext accidental)
       (case accidental
@@ -247,11 +247,11 @@
             `(note
               ,(if chord '(chord) '())
               ,(if (= 0 (ly:moment-grace moment)) '() '(grace))
-              ,(writepitch (ly:music-property m 'pitch))
-              ,(writeduration dur moment)
+              ,(make-pitch (ly:music-property m 'pitch))
+              ,(make-duration dur moment)
               (voice ,voice)
-              ,(writetype dur)
-              ,(writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
+              ,(make-type dur)
+              ,(make-dots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
               ,(if pitch-acc
                    (let* ((pitch (ly:music-property m 'pitch))
                           (my-p-a (filter
@@ -264,8 +264,8 @@
               ,(if (symbol? beam)
                    `(beam (@ (number 1)) ,beam)
                    '())
-              ,(writetimemod dur)
-              ,(writenotations chord tuplet art-types slur-start slur-stop)
+              ,(make-timemod dur)
+              ,(make-notations chord tuplet art-types slur-start slur-stop)
               ,(if (and (not chord) (list? lyrics))
                    (map (lambda (lyric)
                           ;(ly:message "~A" lyric)
@@ -280,12 +280,12 @@
            (write-xml
             `(note
               (rest)
-              ,(writeduration dur moment)
+              ,(make-duration dur moment)
               (voice ,voice)
-              ,(writetype dur)
-              ,(writedots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
-              ,(writetimemod dur)
-              ,(writenotations chord tuplet art-types slur-start slur-stop)
+              ,(make-type dur)
+              ,(make-dots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
+              ,(make-timemod dur)
+              ,(make-notations chord tuplet art-types slur-start slur-stop)
               )))
 
           ((EventChord)
@@ -332,7 +332,7 @@
 
           (for-each
            (lambda (staff)
-             (define (writeclef measure moment doattr)
+             (define (make-clef measure moment doattr)
                (let ((clefGlyph (tree-get musicexport (list measure moment staff 'clefGlyph)))
                      (clefPosition (tree-get musicexport (list measure moment staff 'clefPosition)))
                      (clefTransposition (tree-get musicexport (list measure moment staff 'clefTransposition))))
@@ -370,13 +370,13 @@
                   (write-xml
                    `(attributes
                      (divisions ,divisions) ; divisions by measure?
-                     ,(writekey (tree-get musicexport (list measure first-moment staff 'key-pitch-alist)))
+                     ,(make-key (tree-get musicexport (list measure first-moment staff 'key-pitch-alist)))
                      ,(let ((meter (tree-get musicexport
                                      (list measure first-moment staff 'timesig))))
                         (if (number-pair? meter)
                             `(time (beats ,(car meter)) (beat-type ,(cdr meter)))
                             '()))
-                     ,(writeclef measure first-moment #f)))
+                     ,(make-clef measure first-moment #f)))
 
                   (for-each
                    (lambda (voice)
@@ -387,7 +387,7 @@
                       (lambda (moment)
                         (let ((music (tree-get musicexport (list measure moment staff voice))))
                           (if (not (equal? moment (ly:make-moment 0)))
-                              (write-xml (writeclef measure moment #t)))
+                              (write-xml (make-clef measure moment #t)))
                           (if (ly:music? music)
                               (let ((dur (ly:music-property music 'duration))
                                     (beam (tree-get musicexport (list measure moment staff voice 'beam)))
