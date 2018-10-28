@@ -195,7 +195,7 @@
                 (voice-id (ly:context-property context ctprop::voice-id)))
             ; notes and rests are stored in the tree under measeure/moment/staff/voice
             ; TODO MultiMeasureRests, Upbeats
-            (if (and (ly:music? music) (= 0 (ly:moment-grace moment))) ; Drop grace notes!
+            (if (ly:music? music)
                 (let* ((path (list bar moment staff-id voice-id))
                        (steppath (cddr path))
                        (notes (tree-get musicstep steppath)))
