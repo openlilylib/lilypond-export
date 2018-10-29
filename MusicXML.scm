@@ -338,6 +338,51 @@
           (if doattr `(attributes ,clef-tag) clef-tag))
         '())))
 
+(define backup 0)
+
+(define (make-moment-function musicexport measure staff voice divisions first-moment)
+  (let ((beamcont #f))
+    (lambda (moment)
+      (let ((music (tree-get musicexport (list measure moment staff voice))))
+        (if (not (equal? moment (ly:make-moment 0)))
+            (write-xml (make-clef musicexport measure first-moment staff #t)))
+        (if (ly:music? music)
+            (let ((dur (ly:music-property music 'duration))
+                  (beam (tree-get musicexport (list measure moment staff voice 'beam)))
+                  (pitch-acc (tree-get musicexport (list measure moment staff voice 'pitch-acc)))
+                  (art-types (tree-get musicexport (list measure moment staff voice 'art-types)))
+                  (slur-start (tree-get musicexport (list measure moment staff voice 'slur-start)))
+                  (slur-stop (tree-get musicexport (list measure moment staff voice 'slur-stop)))
+                  (abs-dynamic (tree-get musicexport (list measure moment staff voice 'abs-dynamic)))
+                  (span-dynamic (tree-get musicexport (list measure moment staff voice 'span-dynamic)))
+                  (tuplet (tree-get musicexport (list measure moment staff voice 'tuplet)))
+                  (lyrics (tree-get musicexport (list measure moment staff voice 'lyrics)))
+                  )
+              (case beam
+                ((start) (set! beamcont 'continue))
+                ((end) (set! beamcont #f))
+                )
+
+              ; TODO staff grouping!
+              (writemusic music 1 voice divisions
+                `(beam . ,(cond
+                           ((eq? 'start beam) 'begin)
+                           ((symbol? beam) beam)
+                           ((symbol? beamcont) beamcont)))
+                `(pitch-acc . ,pitch-acc)
+                `(art-types . ,art-types)
+                `(slur-start . ,slur-start)
+                `(slur-stop . ,slur-stop)
+                `(abs-dynamic . ,abs-dynamic)
+                `(span-dynamic . ,span-dynamic)
+                `(moment . ,moment)
+                `(tuplet . ,tuplet)
+                `(lyrics . ,lyrics))
+              (if (ly:duration? dur)
+                  (set! backup (+ backup (* (duration-factor dur) divisions))))
+              ))
+        ))))
+
 (define-public (exportMusicXML musicexport filename . options)
   (let* ((grid (tree-create 'grid))
          (bar-list (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))) )
@@ -380,9 +425,8 @@
 
              (for-each
               (lambda (measure)
-                (let* ((backup 0)
-                       (beamcont #f)
-                       (unsorted-moments (filter ly:moment?
+                (set! backup 0)
+                (let* ((unsorted-moments (filter ly:moment?
                                                  (tree-get-keys musicexport
                                                    (list measure))))
                        (moment-list (sort unsorted-moments ly:moment<?))
@@ -408,47 +452,10 @@
                      (if (> backup 0)
                          (write-xml `(backup (duration ,backup))))
                      (set! backup 0)
-                     (for-each
-                      (lambda (moment)
-                        (let ((music (tree-get musicexport (list measure moment staff voice))))
-                          (if (not (equal? moment (ly:make-moment 0)))
-                              (write-xml (make-clef musicexport measure first-moment staff #t)))
-                          (if (ly:music? music)
-                              (let ((dur (ly:music-property music 'duration))
-                                    (beam (tree-get musicexport (list measure moment staff voice 'beam)))
-                                    (pitch-acc (tree-get musicexport (list measure moment staff voice 'pitch-acc)))
-                                    (art-types (tree-get musicexport (list measure moment staff voice 'art-types)))
-                                    (slur-start (tree-get musicexport (list measure moment staff voice 'slur-start)))
-                                    (slur-stop (tree-get musicexport (list measure moment staff voice 'slur-stop)))
-                                    (abs-dynamic (tree-get musicexport (list measure moment staff voice 'abs-dynamic)))
-                                    (span-dynamic (tree-get musicexport (list measure moment staff voice 'span-dynamic)))
-                                    (tuplet (tree-get musicexport (list measure moment staff voice 'tuplet)))
-                                    (lyrics (tree-get musicexport (list measure moment staff voice 'lyrics)))
-                                    )
-                                (case beam
-                                  ((start) (set! beamcont 'continue))
-                                  ((end) (set! beamcont #f))
-                                  )
 
-                                ; TODO staff grouping!
-                                (writemusic music 1 voice divisions
-                                  `(beam . ,(cond
-                                             ((eq? 'start beam) 'begin)
-                                             ((symbol? beam) beam)
-                                             ((symbol? beamcont) beamcont)))
-                                  `(pitch-acc . ,pitch-acc)
-                                  `(art-types . ,art-types)
-                                  `(slur-start . ,slur-start)
-                                  `(slur-stop . ,slur-stop)
-                                  `(abs-dynamic . ,abs-dynamic)
-                                  `(span-dynamic . ,span-dynamic)
-                                  `(moment . ,moment)
-                                  `(tuplet . ,tuplet)
-                                  `(lyrics . ,lyrics))
-                                (if (ly:duration? dur)
-                                    (set! backup (+ backup (* (duration-factor dur) divisions))))
-                                ))
-                          )) moment-list)
+                     (for-each (make-moment-function musicexport measure staff voice divisions first-moment)
+                       moment-list)
+
                      ) (sort (tree-get-keys grid (list staff)) (lambda (a b) (< a b))))
 
                   (writeln "</measure>")
