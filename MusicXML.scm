@@ -58,7 +58,6 @@
         (finaltime (tree-get musicexport '(finaltime)))
         (division-dur (tree-get musicexport '(division-dur)))
         (divisions 1)
-        (max-slur 0)
         (slur-stack '()))
     (define notenames '(C D E F G A B))
     (define types '(breve breve whole half quarter eighth 16th 32nd 64th 128th))
@@ -191,19 +190,19 @@
           '()))
     (define (make-slurs stype num)
       (if (and num (> num 0))
-          (let ((current-slur
-                 (if (eqv? stype 'start)
-                     (begin
-                       (set! max-slur (+ 1 max-slur))
-                       (set! slur-stack (cons max-slur slur-stack))
-                       max-slur)
-                     (if (null? slur-stack) ; This means a bug somewhere
-                         (begin
-                           (ly:message "WARNING: Slur stack is empty, but got a stop. Ignoring.")
-                           #f)
-                         (let ((stack-top (car slur-stack)))
-                           (set! slur-stack (cdr slur-stack))
-                           stack-top)))))
+          (let* ((stack-top (if (null? slur-stack) 0 (car slur-stack)))
+                 (current-slur
+                  (if (eqv? stype 'start)
+                      (begin
+                        (set! slur-stack (cons (+ 1 stack-top) slur-stack))
+                        (car slur-stack))
+                      (if (= 0 stack-top) ; This means a bug somewhere
+                          (begin
+                            (ly:message "WARNING: Slur stack is empty, but got a stop. Ignoring.")
+                            #f)
+                          (begin
+                            (set! slur-stack (cdr slur-stack))
+                            stack-top)))))
             (if current-slur
                 `((slur (@ (number ,current-slur)
                            (type ,stype)))
@@ -217,8 +216,8 @@
             ,(if chord
                  '()
                  `(,(make-articulations art-types)
-                   ,(make-slurs 'start slur-stop)
-                   ,(make-slurs 'stop slur-start))))
+                   ,(make-slurs 'stop slur-stop)
+                   ,(make-slurs 'start slur-start))))
           '()))
     (define (acctext accidental)
       (case accidental
