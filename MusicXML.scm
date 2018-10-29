@@ -424,6 +424,19 @@
       (writeln "</measure>")
       )))
 
+(define (make-staff-function musicexport divisions grid)
+  (lambda (staff)
+    (let ((measures (sort (filter integer? (tree-get-keys musicexport '()))
+                      (lambda (a b) (< a b))))
+          (measure-function (make-measure-function musicexport staff divisions grid)))
+
+      (writeln "<part id=\"P~A\">" staff)
+
+      (for-each measure-function measures)
+
+      (writeln "</part>")
+      )))
+
 (define-public (exportMusicXML musicexport filename . options)
   (let* ((grid (tree-create 'grid))
          (bar-list (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))) )
@@ -459,18 +472,8 @@
                        `(score-part (@ (id ,id)) (part-name ,part-name))))
                 staff-list)))
 
-          (for-each
-           (lambda (staff)
-             (let ((measures (sort (filter integer? (tree-get-keys musicexport '()))
-                               (lambda (a b) (< a b))))
-                   (measure-function (make-measure-function musicexport staff divisions grid)))
-
-               (writeln "<part id=\"P~A\">" staff)
-
-               (for-each measure-function measures)
-
-               (writeln "</part>")
-               )) staff-list)
+          (for-each (make-staff-function musicexport divisions grid)
+            staff-list)
 
           (writeln "</score-partwise>")
           )))
