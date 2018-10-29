@@ -183,8 +183,7 @@
           (let ((arts (filter identity (map (picker art-map) art-types)))
                 (orns (filter identity (map (picker orn-map) art-types)))
                 (onots (filter identity (map (picker onot-map) art-types))))
-            `(
-              ,(if (not (null? arts)) `(articulations ,(map list arts)) '())
+            `(,(if (not (null? arts)) `(articulations ,(map list arts)) '())
               ,(if (not (null? orns)) `(ornaments ,(map list orns)) '())
               ,(map list onots)))
           '()))
@@ -192,7 +191,7 @@
       (if (and stop-num (> stop-num 0) (> slur-num 0))
           `((slur (@ (number ,slur-num)
                      (type "stop")))
-              ,(make-slurs (- slur-num 1) (- stop-num 1) start-num))
+            ,(make-slurs (- slur-num 1) (- stop-num 1) start-num))
           (if (and start-num (> start-num 0))
               `((slur (@ (number ,slurs)
                          (type "start")))
