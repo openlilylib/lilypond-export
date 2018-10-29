@@ -228,11 +228,16 @@
         ((-1) "flat-flat")
         ((1) "double-sharp")
         (else "")))
-    (define (make-direction abs-dynamic)
+    (define (make-direction abs-dynamic span-dynamic)
       `(direction
         (direction-type
-         (dynamics
-          (,abs-dynamic)))))
+         ,(if abs-dynamic
+              `(dynamics
+                ,(list abs-dynamic))
+              '())
+         ,(if span-dynamic
+              `(wedge (@ (type ,span-dynamic)))
+              '()))))
     (define (writemusic m staff voice . opts)
       (let ((dur (ly:music-property m 'duration))
             (chord (ly:assoc-get 'chord opts #f #f))
@@ -240,6 +245,7 @@
             (slur-start (ly:assoc-get 'slur-start opts #f #f))
             (slur-stop (ly:assoc-get 'slur-stop opts #f #f))
             (abs-dynamic (ly:assoc-get 'abs-dynamic opts #f #f))
+            (span-dynamic (ly:assoc-get 'span-dynamic opts #f #f))
             (beam (ly:assoc-get 'beam opts))
             (tuplet (ly:assoc-get 'tuplet opts))
             (art-types (ly:assoc-get 'art-types opts #f))
@@ -281,8 +287,8 @@
                      lyrics)
                    '())
               ))
-           (if abs-dynamic
-               (write-xml (make-direction abs-dynamic)))
+           (if (and (not chord) (or abs-dynamic span-dynamic))
+               (write-xml (make-direction abs-dynamic span-dynamic)))
            )
 
           ((RestEvent)
@@ -405,6 +411,7 @@
                                     (slur-start (tree-get musicexport (list measure moment staff voice 'slur-start)))
                                     (slur-stop (tree-get musicexport (list measure moment staff voice 'slur-stop)))
                                     (abs-dynamic (tree-get musicexport (list measure moment staff voice 'abs-dynamic)))
+                                    (span-dynamic (tree-get musicexport (list measure moment staff voice 'span-dynamic)))
                                     (tuplet (tree-get musicexport (list measure moment staff voice 'tuplet)))
                                     (lyrics (tree-get musicexport (list measure moment staff voice 'lyrics)))
                                     )
@@ -424,6 +431,7 @@
                                   `(slur-start . ,slur-start)
                                   `(slur-stop . ,slur-stop)
                                   `(abs-dynamic . ,abs-dynamic)
+                                  `(span-dynamic . ,span-dynamic)
                                   `(moment . ,moment)
                                   `(tuplet . ,tuplet)
                                   `(lyrics . ,lyrics))

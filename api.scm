@@ -253,6 +253,14 @@
                     (tree-set! musicexport (list bar moment staff-id voice-id 'abs-dynamic)
                                (string->symbol (ly:music-property music 'text))))
 
+                   ((memq (ly:music-property music 'name) '(CrescendoEvent DecrescendoEvent))
+                    (let ((dir (ly:music-property music 'span-direction))
+                          (type (if (eq? (ly:music-property music 'name) 'CrescendoEvent)
+                                    'crescendo 'decrescendo)))
+                      (tree-set! musicexport (list bar moment staff-id voice-id 'span-dynamic)
+                                 (if (= -1 dir) type 'stop))
+                      ))
+
                    ((eq? (ly:music-property music 'name) 'SlurEvent)
                     (let ((dir (ly:music-property music 'span-direction)))
                       (cond
