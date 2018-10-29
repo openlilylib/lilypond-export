@@ -461,15 +461,16 @@
 
           (for-each
            (lambda (staff)
+             (let ((measures (sort (filter integer? (tree-get-keys musicexport '()))
+                               (lambda (a b) (< a b))))
+                   (measure-function (make-measure-function musicexport staff divisions grid)))
 
-             (writeln "<part id=\"P~A\">" staff)
+               (writeln "<part id=\"P~A\">" staff)
 
-             (for-each
-              (make-measure-function musicexport staff divisions grid)
-              (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))))
+               (for-each measure-function measures)
 
-             (writeln "</part>")
-             ) staff-list)
+               (writeln "</part>")
+               )) staff-list)
 
           (writeln "</score-partwise>")
           )))
