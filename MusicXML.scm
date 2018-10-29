@@ -236,7 +236,7 @@
                 ,(list abs-dynamic))
               '())
          ,(if span-dynamic
-              `(wedge (@ (type ,span-dynamic)))
+              `(wedge (@ (type ,(if (eqv? span-dynamic 'decrescendo) 'diminuendo span-dynamic))))
               '()))))
     (define (writemusic m staff voice . opts)
       (let ((dur (ly:music-property m 'duration))
