@@ -194,25 +194,27 @@
            ,(map list onots)))
       '()))
 
+(define slurs 0)
+
+(define (make-slurs slur-num stop-num start-num)
+  (if (and stop-num (> stop-num 0) (> slur-num 0))
+      `((slur (@ (number ,slur-num)
+                (type "stop")))
+        ,(make-slurs (- slur-num 1) (- stop-num 1) start-num))
+      (if (and start-num (> start-num 0))
+          `((slur (@ (number ,slurs)
+                    (type "start")))
+            ,(make-slurs (+ slurs 1) stop-num (- start-num 1)))
+          (begin
+           (set! slurs slur-num)
+           '()))))
+
 (define-public (exportMusicXML musicexport filename . options)
   (let ((grid (tree-create 'grid))
         (bar-list (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))) )
         (finaltime (tree-get musicexport '(finaltime)))
         (division-dur (tree-get musicexport '(division-dur)))
-        (divisions 1)
-        (slurs 0))
-    (define (make-slurs slur-num stop-num start-num)
-      (if (and stop-num (> stop-num 0) (> slur-num 0))
-          `((slur (@ (number ,slur-num)
-                     (type "stop")))
-            ,(make-slurs (- slur-num 1) (- stop-num 1) start-num))
-          (if (and start-num (> start-num 0))
-              `((slur (@ (number ,slurs)
-                         (type "start")))
-                ,(make-slurs (+ slurs 1) stop-num (- start-num 1)))
-              (begin
-                (set! slurs slur-num)
-                '()))))
+        (divisions 1))
     (define (make-notations chord tuplet art-types slur-start slur-stop)
       (if (or (pair? tuplet) (and (not chord) (or art-types slur-start slur-stop)))
           `(notations
@@ -220,7 +222,7 @@
             ,(if chord
                  '()
                  `(,(make-articulations art-types)
-                   ,(make-slurs slurs slur-stop slur-start))))
+                    ,(make-slurs slurs slur-stop slur-start))))
           '()))
     (define (acctext accidental)
       (case accidental
