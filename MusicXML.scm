@@ -209,39 +209,43 @@
            (set! slurs slur-num)
            '()))))
 
+(define (make-notations chord tuplet art-types slur-start slur-stop)
+  (if (or (pair? tuplet) (and (not chord) (or art-types slur-start slur-stop)))
+      `(notations
+        ,(make-tuplet tuplet)
+        ,(if chord
+             '()
+             `(,(make-articulations art-types)
+                ,(make-slurs slurs slur-stop slur-start))))
+      '()))
+
+(define (acctext accidental)
+  (case accidental
+    ((0) "natural")
+    ((-1/2) "flat")
+    ((1/2) "sharp")
+    ((-1) "flat-flat")
+    ((1) "double-sharp")
+    (else "")))
+
+(define (make-direction abs-dynamic span-dynamic)
+  `(direction
+    (direction-type
+     ,(if abs-dynamic
+          `(dynamics ,(list abs-dynamic))
+          '())
+     ,(if span-dynamic
+          `(wedge (@ (type ,(if (eqv? span-dynamic 'decrescendo)
+                                'diminuendo
+                                span-dynamic))))
+          '()))))
+
 (define-public (exportMusicXML musicexport filename . options)
   (let ((grid (tree-create 'grid))
         (bar-list (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))) )
         (finaltime (tree-get musicexport '(finaltime)))
         (division-dur (tree-get musicexport '(division-dur)))
         (divisions 1))
-    (define (make-notations chord tuplet art-types slur-start slur-stop)
-      (if (or (pair? tuplet) (and (not chord) (or art-types slur-start slur-stop)))
-          `(notations
-            ,(make-tuplet tuplet)
-            ,(if chord
-                 '()
-                 `(,(make-articulations art-types)
-                    ,(make-slurs slurs slur-stop slur-start))))
-          '()))
-    (define (acctext accidental)
-      (case accidental
-        ((0) "natural")
-        ((-1/2) "flat")
-        ((1/2) "sharp")
-        ((-1) "flat-flat")
-        ((1) "double-sharp")
-        (else "")))
-    (define (make-direction abs-dynamic span-dynamic)
-      `(direction
-        (direction-type
-         ,(if abs-dynamic
-              `(dynamics
-                ,(list abs-dynamic))
-              '())
-         ,(if span-dynamic
-              `(wedge (@ (type ,(if (eqv? span-dynamic 'decrescendo) 'diminuendo span-dynamic))))
-              '()))))
     (define (writemusic m staff voice . opts)
       (let ((dur (ly:music-property m 'duration))
             (chord (ly:assoc-get 'chord opts #f #f))
