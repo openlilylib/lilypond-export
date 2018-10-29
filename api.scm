@@ -38,6 +38,7 @@
 
 (use-modules
  (oll-core tree)
+ (oll-core internal music-tools)
  (lilypond-export lily)
  (lilypond-export MusicXML)
  (lilypond-export Humdrum)
@@ -76,9 +77,6 @@
 ((@@ (lily) translator-property-description) ctprop::music-export tree? "Music export store")
 ((@@ (lily) translator-property-description) ctprop::export-step tree? "Music export step store")
 ((@@ (lily) translator-property-description) ctprop::lyrics list? "current lyric events")
-
-; check name property of music object ... just a shortcut
-(define-public (music-is? m n) (and (ly:music? m)(eq? n (ly:music-property m 'name))))
 
 ; combine note-events to event-chord
 (define (combine-notes current music)

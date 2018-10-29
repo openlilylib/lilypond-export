@@ -37,6 +37,7 @@
 
 (use-modules
  (oll-core tree)
+ (oll-core internal music-tools)
  (lilypond-export api)
  (lily))
 
