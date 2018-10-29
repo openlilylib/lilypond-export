@@ -319,6 +319,25 @@
 
       )))
 
+(define (make-clef musicexport measure moment staff doattr)
+  (let ((clefGlyph (tree-get musicexport (list measure moment staff 'clefGlyph)))
+        (clefPosition (tree-get musicexport (list measure moment staff 'clefPosition)))
+        (clefTransposition (tree-get musicexport (list measure moment staff 'clefTransposition))))
+    (if (and (string? clefGlyph)(integer? clefPosition))
+        (let* ((sign (list-ref (string-split clefGlyph #\.) 1))
+               (line (+ 3 (/ clefPosition 2)))
+               (octave-change (if (and (not (= 0 clefTransposition))
+                                       (= 0 (modulo clefTransposition 7)))
+                                  `(clef-octave-change ,(/ clefTransposition 7))
+                                  '()))
+               (clef-tag `(clef
+                           (sign ,sign)
+                           (line ,line)
+                           ,octave-change
+                           )))
+          (if doattr `(attributes ,clef-tag) clef-tag))
+        '())))
+
 (define-public (exportMusicXML musicexport filename . options)
   (let* ((grid (tree-create 'grid))
          (bar-list (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))) )
@@ -356,24 +375,6 @@
 
           (for-each
            (lambda (staff)
-             (define (make-clef measure moment doattr)
-               (let ((clefGlyph (tree-get musicexport (list measure moment staff 'clefGlyph)))
-                     (clefPosition (tree-get musicexport (list measure moment staff 'clefPosition)))
-                     (clefTransposition (tree-get musicexport (list measure moment staff 'clefTransposition))))
-                 (if (and (string? clefGlyph)(integer? clefPosition))
-                     (let* ((sign (list-ref (string-split clefGlyph #\.) 1))
-                            (line (+ 3 (/ clefPosition 2)))
-                            (octave-change (if (and (not (= 0 clefTransposition))
-                                                    (= 0 (modulo clefTransposition 7)))
-                                               `(clef-octave-change ,(/ clefTransposition 7))
-                                               '()))
-                            (clef-tag `(clef
-                                        (sign ,sign)
-                                        (line ,line)
-                                        ,octave-change
-                                        )))
-                       (if doattr `(attributes ,clef-tag) clef-tag))
-                     '())))
 
              (writeln "<part id=\"P~A\">" staff)
 
@@ -400,7 +401,7 @@
                         (if (number-pair? meter)
                             `(time (beats ,(car meter)) (beat-type ,(cdr meter)))
                             '()))
-                     ,(make-clef measure first-moment #f)))
+                     ,(make-clef musicexport measure first-moment staff #f)))
 
                   (for-each
                    (lambda (voice)
@@ -411,7 +412,7 @@
                       (lambda (moment)
                         (let ((music (tree-get musicexport (list measure moment staff voice))))
                           (if (not (equal? moment (ly:make-moment 0)))
-                              (write-xml (make-clef measure moment #t)))
+                              (write-xml (make-clef musicexport measure first-moment staff #t)))
                           (if (ly:music? music)
                               (let ((dur (ly:music-property music 'duration))
                                     (beam (tree-get musicexport (list measure moment staff voice 'beam)))
