@@ -383,6 +383,14 @@
               ))
         ))))
 
+(define (make-voice-function musicexport measure staff divisions moment-list first-moment)
+  (lambda (voice)
+    (if (> backup 0)
+        (write-xml `(backup (duration ,backup))))
+    (set! backup 0)
+    (for-each (make-moment-function musicexport measure staff voice divisions first-moment)
+      moment-list)))
+
 (define-public (exportMusicXML musicexport filename . options)
   (let* ((grid (tree-create 'grid))
          (bar-list (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))) )
@@ -448,15 +456,8 @@
                      ,(make-clef musicexport measure first-moment staff #f)))
 
                   (for-each
-                   (lambda (voice)
-                     (if (> backup 0)
-                         (write-xml `(backup (duration ,backup))))
-                     (set! backup 0)
-
-                     (for-each (make-moment-function musicexport measure staff voice divisions first-moment)
-                       moment-list)
-
-                     ) (sort (tree-get-keys grid (list staff)) (lambda (a b) (< a b))))
+                   (make-voice-function musicexport measure staff divisions moment-list first-moment)
+                   (sort (tree-get-keys grid (list staff)) (lambda (a b) (< a b))))
 
                   (writeln "</measure>")
                   )) (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))))
