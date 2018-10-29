@@ -249,6 +249,10 @@
                                  (cons art-type (if art-types art-types '())))
                       ))
 
+                   ((eq? (ly:music-property music 'name) 'AbsoluteDynamicEvent)
+                    (tree-set! musicexport (list bar moment staff-id voice-id 'abs-dynamic)
+                               (string->symbol (ly:music-property music 'text))))
+
                    ((eq? (ly:music-property music 'name) 'SlurEvent)
                     (let ((dir (ly:music-property music 'span-direction)))
                       (cond
