@@ -320,13 +320,14 @@
       )))
 
 (define-public (exportMusicXML musicexport filename . options)
-  (let ((grid (tree-create 'grid))
-        (bar-list (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))) )
-        (finaltime (tree-get musicexport '(finaltime)))
-        (division-dur (tree-get musicexport '(division-dur)))
-        (divisions 1))
+  (let* ((grid (tree-create 'grid))
+         (bar-list (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))) )
+         (finaltime (tree-get musicexport '(finaltime)))
+         (division-dur (tree-get musicexport '(division-dur)))
+         (divisions (if (ly:duration? division-dur)
+                        (/ 64 (duration-factor division-dur))
+                        1)))
 
-    (if (ly:duration? division-dur) (set! divisions (/ 64 (duration-factor division-dur))))
     (ly:message "divisions: ~A" divisions)
 
     (tree-walk musicexport '()
