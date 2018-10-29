@@ -58,7 +58,7 @@
         (finaltime (tree-get musicexport '(finaltime)))
         (division-dur (tree-get musicexport '(division-dur)))
         (divisions 1)
-        (slur-stack '()))
+        (slurs 0))
     (define notenames '(C D E F G A B))
     (define types '(breve breve whole half quarter eighth 16th 32nd 64th 128th))
     (define (writeln x . args) (if (> (length args) 0) (apply format #t x args)(display x))(newline))
@@ -188,27 +188,18 @@
               ,(if (not (null? orns)) `(ornaments ,(map list orns)) '())
               ,(map list onots)))
           '()))
-    (define (make-slurs stype num)
-      (if (and num (> num 0))
-          (let* ((stack-top (if (null? slur-stack) 0 (car slur-stack)))
-                 (current-slur
-                  (if (eqv? stype 'start)
-                      (begin
-                        (set! slur-stack (cons (+ 1 stack-top) slur-stack))
-                        (car slur-stack))
-                      (if (= 0 stack-top) ; This means a bug somewhere
-                          (begin
-                            (ly:message "WARNING: Slur stack is empty, but got a stop. Ignoring.")
-                            #f)
-                          (begin
-                            (set! slur-stack (cdr slur-stack))
-                            stack-top)))))
-            (if current-slur
-                `((slur (@ (number ,current-slur)
-                           (type ,stype)))
-                  ,(make-slurs stype (- num 1)))
-                '()))
-          '()))
+    (define (make-slurs slur-num stop-num start-num)
+      (if (and stop-num (> stop-num 0) (> slur-num 0))
+          `((slur (@ (number ,slur-num)
+                     (type "stop")))
+              ,(make-slurs (- slur-num 1) (- stop-num 1) start-num))
+          (if (and start-num (> start-num 0))
+              `((slur (@ (number ,slurs)
+                         (type "start")))
+                ,(make-slurs (+ slurs 1) stop-num (- start-num 1)))
+              (begin
+                (set! slurs slur-num)
+                '()))))
     (define (make-notations chord tuplet art-types slur-start slur-stop)
       (if (or (pair? tuplet) (and (not chord) (or art-types slur-start slur-stop)))
           `(notations
@@ -216,8 +207,7 @@
             ,(if chord
                  '()
                  `(,(make-articulations art-types)
-                   ,(make-slurs 'stop slur-stop)
-                   ,(make-slurs 'start slur-start))))
+                   ,(make-slurs slurs slur-stop slur-start))))
           '()))
     (define (acctext accidental)
       (case accidental
