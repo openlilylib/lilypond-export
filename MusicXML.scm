@@ -133,6 +133,67 @@
         )
       '()))
 
+(define (make-type dur)
+  (if (ly:duration? dur)
+      `(type ,(list-ref types (+ 2 (ly:duration-log dur))))
+      '()))
+
+(define (make-dots d)
+  (if (> d 0)
+      (cons '(dot) (make-dots (1- d)))
+      '()))
+
+(define (make-timemod dur)
+  (if (and (ly:duration? dur) (not (integer? (ly:duration-scale dur))))
+      (let ((num (numerator (ly:duration-scale dur)))
+            (den (denominator (ly:duration-scale dur))))
+        `(time-modification
+          (actual-notes ,den)
+          (normal-notes ,num)))
+      '()))
+
+(define (make-tuplet tuplet)
+  (if (pair? tuplet)
+      `(tuplet (@ (number 1)
+                 (placement "above")
+                 (type ,(car tuplet))))
+      '()))
+
+(define art-map ; articulations
+  '((accent . accent)
+    (marcato . strong-accent)
+    (portato . detached-legato)
+    (staccatissimo . staccatissimo)
+    (staccato . staccato)
+    (tenuto . tenuto)))
+
+(define orn-map ; ornaments
+  '((reverseturn . inverted-turn)
+    (mordent . mordent)
+    (prall . shake)
+    (trill . trill-mark)
+    (turn . turn)))
+
+(define onot-map '((fermata . fermata))) ; other notaions
+
+(define picker
+  (lambda (the-map)
+    (lambda (atype)
+      (if (null? atype)
+          #f
+          (let ((art-pair (assq (string->symbol atype) the-map)))
+            (if art-pair (cdr art-pair) #f))))))
+
+(define (make-articulations art-types)
+  (if art-types
+      (let ((arts (filter identity (map (picker art-map) art-types)))
+            (orns (filter identity (map (picker orn-map) art-types)))
+            (onots (filter identity (map (picker onot-map) art-types))))
+        `(,(if (not (null? arts)) `(articulations ,(map list arts)) '())
+           ,(if (not (null? orns)) `(ornaments ,(map list orns)) '())
+           ,(map list onots)))
+      '()))
+
 (define-public (exportMusicXML musicexport filename . options)
   (let ((grid (tree-create 'grid))
         (bar-list (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))) )
@@ -140,59 +201,6 @@
         (division-dur (tree-get musicexport '(division-dur)))
         (divisions 1)
         (slurs 0))
-
-    (define (make-type dur)
-      (if (ly:duration? dur)
-          `(type ,(list-ref types (+ 2 (ly:duration-log dur))))
-          '()))
-    (define (make-dots d)
-      (if (> d 0)
-          (cons '(dot) (make-dots (1- d)))
-          '()))
-    (define (make-timemod dur)
-      (if (and (ly:duration? dur) (not (integer? (ly:duration-scale dur))))
-          (let ((num (numerator (ly:duration-scale dur)))
-                (den (denominator (ly:duration-scale dur))))
-            `(time-modification
-              (actual-notes ,den)
-              (normal-notes ,num)))
-          '()))
-    (define (make-tuplet tuplet)
-      (if (pair? tuplet)
-          `(tuplet (@ (number 1)
-                      (placement "above")
-                      (type ,(car tuplet))))
-          '()))
-    (define art-map ; articulations
-      '((accent . accent)
-        (marcato . strong-accent)
-        (portato . detached-legato)
-        (staccatissimo . staccatissimo)
-        (staccato . staccato)
-        (tenuto . tenuto)))
-    (define orn-map ; ornaments
-      '((reverseturn . inverted-turn)
-        (mordent . mordent)
-        (prall . shake)
-        (trill . trill-mark)
-        (turn . turn)))
-    (define onot-map '((fermata . fermata))) ; other notaions
-    (define picker
-      (lambda (the-map)
-        (lambda (atype)
-          (if (null? atype)
-              #f
-              (let ((art-pair (assq (string->symbol atype) the-map)))
-                (if art-pair (cdr art-pair) #f))))))
-    (define (make-articulations art-types)
-      (if art-types
-          (let ((arts (filter identity (map (picker art-map) art-types)))
-                (orns (filter identity (map (picker orn-map) art-types)))
-                (onots (filter identity (map (picker onot-map) art-types))))
-            `(,(if (not (null? arts)) `(articulations ,(map list arts)) '())
-              ,(if (not (null? orns)) `(ornaments ,(map list orns)) '())
-              ,(map list onots)))
-          '()))
     (define (make-slurs slur-num stop-num start-num)
       (if (and stop-num (> stop-num 0) (> slur-num 0))
           `((slur (@ (number ,slur-num)
