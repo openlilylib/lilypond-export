@@ -27,12 +27,11 @@
 % openLilyLib is maintained by Urs Liska, ul@openlilylib.org                  %
 % lilypond-export is maintained by Jan-Peter Voigt, jp.voigt@gmx.de           %
 %                                                                             %
-%       Copyright Jan-Peter Voigt, Urs Liska, 2017                            %
+%       Copyright Jan-Peter Voigt, Urs Liska, 2017, 2018                      %
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \version "2.19.58"
-\include "oll-core/package.ily"
 #(use-modules (lilypond-export api))
 
 %%%% export music
@@ -47,4 +46,3 @@ exportMusic =
      (if (symbol? exporter) (set! exporter (ly:assoc-get exporter exporters exportMusicXML #t)))
      (ly:run-translator (ly:score-music (scorify-music music)) (FileExport `((filebase . ,filebase)(exporter . ,exporter)) ))
      ))
-

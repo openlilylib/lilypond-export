@@ -28,7 +28,7 @@
 % openLilyLib is maintained by Urs Liska, ul@openlilylib.org                  %
 % lilypond-export is maintained by Jan-Peter Voigt, jp.voigt@gmx.de           %
 %                                                                             %
-%       Copyright Jan-Peter Voigt, Urs Liska, 2017                            %
+%       Copyright Jan-Peter Voigt, Urs Liska, 2017, 2018                      %
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
