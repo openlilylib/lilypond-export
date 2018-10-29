@@ -391,6 +391,39 @@
     (for-each (make-moment-function musicexport measure staff voice divisions first-moment)
       moment-list)))
 
+(define (make-measure-function musicexport staff divisions grid)
+  (lambda (measure)
+    (set! backup 0)
+    (let* ((unsorted-moments (filter ly:moment?
+                                     (tree-get-keys musicexport
+                                       (list measure))))
+           (moment-list (sort unsorted-moments ly:moment<?))
+           (first-moment (if (> (length moment-list) 0)
+                             (car moment-list)
+                             (ly:make-moment 0)))
+           (voices (sort (tree-get-keys grid (list staff))
+                     (lambda (a b) (< a b)))))
+
+      (writeln "<measure number=\"~A\">" measure)
+
+      (write-xml
+       `(attributes
+         (divisions ,divisions) ; divisions by measure?
+         ,(make-key (tree-get musicexport (list measure first-moment staff 'key-pitch-alist)))
+         ,(let ((meter (tree-get musicexport
+                         (list measure first-moment staff 'timesig))))
+            (if (number-pair? meter)
+                `(time (beats ,(car meter)) (beat-type ,(cdr meter)))
+                '()))
+         ,(make-clef musicexport measure first-moment staff #f)))
+
+      (for-each
+       (make-voice-function musicexport measure staff divisions moment-list first-moment)
+       voices)
+
+      (writeln "</measure>")
+      )))
+
 (define-public (exportMusicXML musicexport filename . options)
   (let* ((grid (tree-create 'grid))
          (bar-list (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))) )
@@ -432,35 +465,8 @@
              (writeln "<part id=\"P~A\">" staff)
 
              (for-each
-              (lambda (measure)
-                (set! backup 0)
-                (let* ((unsorted-moments (filter ly:moment?
-                                                 (tree-get-keys musicexport
-                                                   (list measure))))
-                       (moment-list (sort unsorted-moments ly:moment<?))
-                       (first-moment (if (> (length moment-list) 0)
-                                         (car moment-list)
-                                         (ly:make-moment 0))))
-
-                  (writeln "<measure number=\"~A\">" measure)
-
-                  (write-xml
-                   `(attributes
-                     (divisions ,divisions) ; divisions by measure?
-                     ,(make-key (tree-get musicexport (list measure first-moment staff 'key-pitch-alist)))
-                     ,(let ((meter (tree-get musicexport
-                                     (list measure first-moment staff 'timesig))))
-                        (if (number-pair? meter)
-                            `(time (beats ,(car meter)) (beat-type ,(cdr meter)))
-                            '()))
-                     ,(make-clef musicexport measure first-moment staff #f)))
-
-                  (for-each
-                   (make-voice-function musicexport measure staff divisions moment-list first-moment)
-                   (sort (tree-get-keys grid (list staff)) (lambda (a b) (< a b))))
-
-                  (writeln "</measure>")
-                  )) (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))))
+              (make-measure-function musicexport staff divisions grid)
+              (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))))
 
              (writeln "</part>")
              ) staff-list)
