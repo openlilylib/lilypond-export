@@ -27,16 +27,15 @@
 % openLilyLib is maintained by Urs Liska, ul@openlilylib.org                  %
 % lilypond-export is maintained by Jan-Peter Voigt, jp.voigt@gmx.de           %
 %                                                                             %
-%       Copyright Jan-Peter Voigt, Urs Liska, 2017                            %
+%       Copyright Jan-Peter Voigt, Urs Liska, 2017, 2018                      %
 %                                                                             %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 \version "2.19.58"
-\include "oll-core/package.ily"
 #(use-modules (lilypond-export api))
 
 #(ly:warning "deprecated include \"export-base.ly\"!")
-#(ly:warning "do \\include \"lilypond-export/package.ily\"")
+#(ly:warning "do \\include \"oll-core/package.ily\" and \"\n\\loadPackage lilypond-export\"")
 
 %%%% export music
 % filebase: file basename - suffix (.krn/.xml) is taken from the exporter
