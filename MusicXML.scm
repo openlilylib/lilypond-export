@@ -442,6 +442,15 @@
          ,(map-in-order measure-function measures))
       )))
 
+(define (make-score-parts staff-list)
+  (map (lambda (staff-number)
+         (let ((id (format #f "P~A" staff-number))
+               (part-name (format #f "Part ~A" staff-number)))
+           `(score-part
+             (@ (id ,id))
+             (part-name ,part-name))))
+    staff-list))
+
 (define-public (exportMusicXML musicexport filename . options)
   (let* ((grid (tree-create 'grid))
          (bar-list (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))) )
@@ -460,27 +469,21 @@
                   (voice (cadddr path)))
               (if (and (integer? staff)(integer? voice))
                   (tree-set! grid (list staff voice) #t))
-              )
-            )))
+              ))))
 
-    (let ((staff-list (sort (tree-get-keys grid '()) (lambda (a b) (< a b)))))
+    (let ((staff-list (sort (tree-get-keys grid '())
+                        (lambda (a b) (< a b)))))
       (with-output-to-file filename
         (lambda ()
           (writeln "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
           (writeln "<!DOCTYPE score-partwise PUBLIC \"-//Recordare//DTD MusicXML 3.0 Partwise//EN\" \"http://www.musicxml.org/dtds/partwise.dtd\">")
-          (writeln "<score-partwise version=\"3.0\">")
           (sxml->xml
-           `((part-list
-              ,(map-in-order (lambda (staff)
-                               (let ((id (format #f "P~A" staff))
-                                     (part-name (format #f "Part ~A" staff)))
-                                 `(score-part (@ (id ,id)) (part-name ,part-name))))
-                 staff-list))
-
-             ,(map-in-order (make-staff-function musicexport divisions grid)
-                staff-list)))
-
-          (writeln "</score-partwise>")
+           `(score-partwise
+             (@ (version "3.0"))
+             (part-list ,(make-score-parts staff-list))
+             ,(map-in-order
+               (make-staff-function musicexport divisions grid)
+               staff-list)))
           )))
     ))
 
