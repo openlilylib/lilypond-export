@@ -56,10 +56,6 @@
 (define types '(breve breve whole half quarter eighth 16th 32nd 64th 128th))
 (define (writeln x . args) (if (> (length args) 0) (apply format #t x args)(display x))(newline))
 
-(define (write-xml sxml)
-  (sxml->xml sxml)
-  (newline))
-
 (define (make-pitch p)
   (if (ly:pitch? p)
       (let ((notename (list-ref notenames (ly:pitch-notename p)))
@@ -241,24 +237,29 @@
           '()))))
 
 (define (writemusic m staff voice divisions . opts)
-  (let ((dur (ly:music-property m 'duration))
-        (chord (ly:assoc-get 'chord opts #f #f))
-        (pitch-acc (ly:assoc-get 'pitch-acc opts #f #f))
-        (slur-start (ly:assoc-get 'slur-start opts #f #f))
-        (slur-stop (ly:assoc-get 'slur-stop opts #f #f))
-        (abs-dynamic (ly:assoc-get 'abs-dynamic opts #f #f))
-        (span-dynamic (ly:assoc-get 'span-dynamic opts #f #f))
-        (beam (ly:assoc-get 'beam opts))
-        (tuplet (ly:assoc-get 'tuplet opts))
-        (art-types (ly:assoc-get 'art-types opts #f))
-        (lyrics (ly:assoc-get 'lyrics opts))
-        (moment (ly:assoc-get 'moment opts)))
+  (let* ((dur (ly:music-property m 'duration))
+         (chord (ly:assoc-get 'chord opts #f #f))
+         (pitch-acc (ly:assoc-get 'pitch-acc opts #f #f))
+         (slur-start (ly:assoc-get 'slur-start opts #f #f))
+         (slur-stop (ly:assoc-get 'slur-stop opts #f #f))
+         (abs-dynamic (ly:assoc-get 'abs-dynamic opts #f #f))
+         (span-dynamic (ly:assoc-get 'span-dynamic opts #f #f))
+         (beam (ly:assoc-get 'beam opts))
+         (tuplet (ly:assoc-get 'tuplet opts))
+         (art-types (ly:assoc-get 'art-types opts #f))
+         (lyrics (ly:assoc-get 'lyrics opts))
+         (moment (ly:assoc-get 'moment opts))
+         (music-name (ly:music-property m 'name))
+         (dynamic-element (if (and (equal? music-name 'NoteEvent)
+                                   (not chord)
+                                   (or abs-dynamic span-dynamic))
+                              (make-direction abs-dynamic span-dynamic)
+                              '())))
     ;(ly:message "-----> lyrics ~A" lyrics)
-    (case (ly:music-property m 'name)
+    (case music-name
 
       ((NoteEvent)
-       (write-xml
-        `(note
+       `((note
           ,(if chord '(chord) '())
           ,(if (= 0 (ly:moment-grace moment)) '() '(grace))
           ,(make-pitch (ly:music-property m 'pitch))
@@ -287,36 +288,36 @@
                         (syllabic "single")
                         (text ,lyric)))
                  lyrics)
-               '())
-          ))
-       (if (and (not chord) (or abs-dynamic span-dynamic))
-           (write-xml (make-direction abs-dynamic span-dynamic))))
+               '()))
+         ,dynamic-element
+         ))
 
       ((RestEvent)
-       (write-xml
-        `(note
-          (rest)
-          ,(make-duration dur moment divisions)
-          (voice ,voice)
-          ,(make-type dur)
-          ,(make-dots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
-          ,(make-timemod dur)
-          ,(make-notations chord tuplet art-types slur-start slur-stop)
-          )))
+       `(note
+         (rest)
+         ,(make-duration dur moment divisions)
+         (voice ,voice)
+         ,(make-type dur)
+         ,(make-dots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
+         ,(make-timemod dur)
+         ,(make-notations chord tuplet art-types slur-start slur-stop)
+         ))
 
       ((EventChord)
        (let* ((elements (ly:music-property m 'elements))
               (notes (filter (lambda (m) (music-is? m 'NoteEvent)) elements))
-              (note-count (length notes))
               (artics (filter (lambda (m) (not (music-is? m 'NoteEvent))) elements)))
-         (if (> note-count 0) (apply writemusic (car notes) staff voice divisions opts))
-         ;(set! opts (assoc-remove! opts 'beam))
-         (for-each
-          (lambda (n)
-            (apply writemusic n staff voice divisions (cons '(chord . #t) opts))
-            ) (cdr notes))
+         (if (not (null? notes))
+             (cons
+              (apply writemusic (car notes) staff voice divisions opts)
+              (map
+               (lambda (n)
+                 (apply writemusic n staff voice divisions (cons '(chord . #t) opts)))
+               (cdr notes)))
+             '())
          ))
 
+      (else '())
       )))
 
 (define (make-clef musicexport measure moment staff doattr)
@@ -343,9 +344,13 @@
 (define (make-moment-function musicexport measure staff voice divisions first-moment)
   (let ((beamcont #f))
     (lambda (moment)
-      (let ((music (tree-get musicexport (list measure moment staff voice))))
-        (if (not (equal? moment (ly:make-moment 0)))
-            (write-xml (make-clef musicexport measure first-moment staff #t)))
+      (let ((music (tree-get musicexport
+                     (list measure moment staff voice)))
+            (clef-element
+             (if (not (equal? moment (ly:make-moment 0)))
+                 (make-clef musicexport measure first-moment staff #t)
+                 '())))
+
         (if (ly:music? music)
             (let ((dur (ly:music-property music 'duration))
                   (beam (tree-get musicexport (list measure moment staff voice 'beam)))
@@ -363,33 +368,37 @@
                 ((end) (set! beamcont #f))
                 )
 
-              ; TODO staff grouping!
-              (writemusic music 1 voice divisions
-                `(beam . ,(cond
-                           ((eq? 'start beam) 'begin)
-                           ((symbol? beam) beam)
-                           ((symbol? beamcont) beamcont)))
-                `(pitch-acc . ,pitch-acc)
-                `(art-types . ,art-types)
-                `(slur-start . ,slur-start)
-                `(slur-stop . ,slur-stop)
-                `(abs-dynamic . ,abs-dynamic)
-                `(span-dynamic . ,span-dynamic)
-                `(moment . ,moment)
-                `(tuplet . ,tuplet)
-                `(lyrics . ,lyrics))
               (if (ly:duration? dur)
                   (set! backup (+ backup (* (duration-factor dur) divisions))))
-              ))
+
+              ; TODO staff grouping!
+              (list clef-element
+                (writemusic music 1 voice divisions
+                  `(beam . ,(cond
+                             ((eq? 'start beam) 'begin)
+                             ((symbol? beam) beam)
+                             ((symbol? beamcont) beamcont)))
+                  `(pitch-acc . ,pitch-acc)
+                  `(art-types . ,art-types)
+                  `(slur-start . ,slur-start)
+                  `(slur-stop . ,slur-stop)
+                  `(abs-dynamic . ,abs-dynamic)
+                  `(span-dynamic . ,span-dynamic)
+                  `(moment . ,moment)
+                  `(tuplet . ,tuplet)
+                  `(lyrics . ,lyrics))))
+            '())
         ))))
 
 (define (make-voice-function musicexport measure staff divisions moment-list first-moment)
   (lambda (voice)
-    (if (> backup 0)
-        (write-xml `(backup (duration ,backup))))
-    (set! backup 0)
-    (for-each (make-moment-function musicexport measure staff voice divisions first-moment)
-      moment-list)))
+    (let ((backup-element (if (> backup 0)
+                              `(backup (duration ,backup))
+                              '())))
+      (set! backup 0)
+      (list backup-element
+        (map-in-order (make-moment-function musicexport measure staff voice divisions first-moment)
+          moment-list)))))
 
 (define (make-measure-function musicexport staff divisions grid)
   (lambda (measure)
@@ -402,39 +411,35 @@
                              (car moment-list)
                              (ly:make-moment 0)))
            (voices (sort (tree-get-keys grid (list staff))
-                     (lambda (a b) (< a b)))))
+                     (lambda (a b) (< a b))))
+           (attributes-element
+            `(attributes
+              (divisions ,divisions) ; divisions by measure?
+              ,(make-key (tree-get musicexport
+                           (list measure first-moment staff 'key-pitch-alist)))
+              ,(let ((meter (tree-get musicexport
+                              (list measure first-moment staff 'timesig))))
+                 (if (number-pair? meter)
+                     `(time (beats ,(car meter)) (beat-type ,(cdr meter)))
+                     '()))
+              ,(make-clef musicexport measure first-moment staff #f))))
 
-      (writeln "<measure number=\"~A\">" measure)
-
-      (write-xml
-       `(attributes
-         (divisions ,divisions) ; divisions by measure?
-         ,(make-key (tree-get musicexport (list measure first-moment staff 'key-pitch-alist)))
-         ,(let ((meter (tree-get musicexport
-                         (list measure first-moment staff 'timesig))))
-            (if (number-pair? meter)
-                `(time (beats ,(car meter)) (beat-type ,(cdr meter)))
-                '()))
-         ,(make-clef musicexport measure first-moment staff #f)))
-
-      (for-each
-       (make-voice-function musicexport measure staff divisions moment-list first-moment)
-       voices)
-
-      (writeln "</measure>")
+      `(measure (@ (number ,measure))
+         ,(list attributes-element
+            (map-in-order
+             (make-voice-function musicexport measure staff divisions moment-list first-moment)
+             voices)))
       )))
 
 (define (make-staff-function musicexport divisions grid)
   (lambda (staff)
     (let ((measures (sort (filter integer? (tree-get-keys musicexport '()))
                       (lambda (a b) (< a b))))
-          (measure-function (make-measure-function musicexport staff divisions grid)))
+          (measure-function (make-measure-function musicexport staff divisions grid))
+          (part-id (format #f "P~A" staff)))
 
-      (writeln "<part id=\"P~A\">" staff)
-
-      (for-each measure-function measures)
-
-      (writeln "</part>")
+      `(part (@ (id ,part-id))
+         ,(map-in-order measure-function measures))
       )))
 
 (define-public (exportMusicXML musicexport filename . options)
@@ -464,16 +469,16 @@
           (writeln "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
           (writeln "<!DOCTYPE score-partwise PUBLIC \"-//Recordare//DTD MusicXML 3.0 Partwise//EN\" \"http://www.musicxml.org/dtds/partwise.dtd\">")
           (writeln "<score-partwise version=\"3.0\">")
-          (write-xml
-           `(part-list
-             ,(map (lambda (staff)
-                     (let ((id (format #f "P~A" staff))
-                           (part-name (format #f "Part ~A" staff)))
-                       `(score-part (@ (id ,id)) (part-name ,part-name))))
-                staff-list)))
+          (sxml->xml
+           `((part-list
+              ,(map-in-order (lambda (staff)
+                               (let ((id (format #f "P~A" staff))
+                                     (part-name (format #f "Part ~A" staff)))
+                                 `(score-part (@ (id ,id)) (part-name ,part-name))))
+                 staff-list))
 
-          (for-each (make-staff-function musicexport divisions grid)
-            staff-list)
+             ,(map-in-order (make-staff-function musicexport divisions grid)
+                staff-list)))
 
           (writeln "</score-partwise>")
           )))
