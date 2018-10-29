@@ -52,6 +52,56 @@
    (ly:duration-scale dur)
    ))
 
+(define notenames '(C D E F G A B))
+(define types '(breve breve whole half quarter eighth 16th 32nd 64th 128th))
+(define (writeln x . args) (if (> (length args) 0) (apply format #t x args)(display x))(newline))
+
+(define (write-xml sxml)
+  (sxml->xml sxml)
+  (newline))
+
+(define (make-pitch p)
+  (if (ly:pitch? p)
+      (let ((notename (list-ref notenames (ly:pitch-notename p)))
+            (alter (* 2 (ly:pitch-alteration p)))
+            (octave (+ 4 (ly:pitch-octave p))))
+        `(pitch
+          (step ,notename)
+          ,(if (not (= 0 alter)) `(alter ,alter) '())
+          (octave ,octave)))
+      '(rest)))
+
+(define (make-keyblock pitch-alt)
+  ;; This is alternative to the traditional keys like Gm and F
+  ;; https://usermanuals.musicxml.com/MusicXML/Content/EL-MusicXML-key.htm
+  (let ((notename (list-ref notenames (car pitch-alt)))
+        (alt (cdr pitch-alt)))
+    `((key-step ,notename)
+      (key-alter ,(* 2 alt))
+      (key-accidental ,(acctext alt)))))
+
+(define (fifths pitch-alist)
+  (let ((flats (length (filter (lambda (pa) (= -1/2 (cdr pa))) pitch-alist)))
+        (sharps (length (filter (lambda (pa) (= 1/2 (cdr pa))) pitch-alist)))
+        (others (length (filter (lambda (pa) (and (not (= 1/2 (cdr pa))) (not (= -1/2 (cdr pa))))) pitch-alist))))
+    (cond
+     ((> others 0) #f)
+     ((and (> flats 0) (> sharps 0)) #f)
+     ((> flats 0) (- flats))
+     (else sharps))
+    ))
+
+(define (make-key pitch-alist)
+  (if pitch-alist
+      (let* ((non-zero-pitch-alts (filter (lambda (p-a) (not (= 0 (cdr p-a)))) pitch-alist))
+             (fifths-val (fifths non-zero-pitch-alts)))
+        `(key
+          ,(if fifths-val
+               `((fifths ,fifths-val) (mode "none"))
+               (map make-keyblock non-zero-pitch-alts) ; alternative to traditional keys
+               )))
+      '()))
+
 (define-public (exportMusicXML musicexport filename . options)
   (let ((grid (tree-create 'grid))
         (bar-list (sort (filter integer? (tree-get-keys musicexport '())) (lambda (a b) (< a b))) )
@@ -59,52 +109,7 @@
         (division-dur (tree-get musicexport '(division-dur)))
         (divisions 1)
         (slurs 0))
-    (define notenames '(C D E F G A B))
-    (define types '(breve breve whole half quarter eighth 16th 32nd 64th 128th))
-    (define (writeln x . args) (if (> (length args) 0) (apply format #t x args)(display x))(newline))
 
-    (define (write-xml sxml)
-      (sxml->xml sxml)
-      (newline))
-
-    (define (make-pitch p)
-      (if (ly:pitch? p)
-          (let ((notename (list-ref notenames (ly:pitch-notename p)))
-                (alter (* 2 (ly:pitch-alteration p)))
-                (octave (+ 4 (ly:pitch-octave p))))
-            `(pitch
-              (step ,notename)
-              ,(if (not (= 0 alter)) `(alter ,alter) '())
-              (octave ,octave)))
-          '(rest)))
-    (define (make-keyblock pitch-alt)
-      ;; This is alternative to the traditional keys like Gm and F
-      ;; https://usermanuals.musicxml.com/MusicXML/Content/EL-MusicXML-key.htm
-      (let ((notename (list-ref notenames (car pitch-alt)))
-            (alt (cdr pitch-alt)))
-        `((key-step ,notename)
-          (key-alter ,(* 2 alt))
-          (key-accidental ,(acctext alt)))))
-    (define (fifths pitch-alist)
-      (let ((flats (length (filter (lambda (pa) (= -1/2 (cdr pa))) pitch-alist)))
-            (sharps (length (filter (lambda (pa) (= 1/2 (cdr pa))) pitch-alist)))
-            (others (length (filter (lambda (pa) (and (not (= 1/2 (cdr pa))) (not (= -1/2 (cdr pa))))) pitch-alist))))
-        (cond
-         ((> others 0) #f)
-         ((and (> flats 0) (> sharps 0)) #f)
-         ((> flats 0) (- flats))
-         (else sharps))
-      ))
-    (define (make-key pitch-alist)
-      (if pitch-alist
-          (let* ((non-zero-pitch-alts (filter (lambda (p-a) (not (= 0 (cdr p-a)))) pitch-alist))
-                 (fifths-val (fifths non-zero-pitch-alts)))
-            `(key
-              ,(if fifths-val
-                   `((fifths ,fifths-val) (mode "none"))
-                   (map make-keyblock non-zero-pitch-alts) ; alternative to traditional keys
-                   )))
-          '()))
     (define (make-duration dur moment)
       (if (and (ly:duration? dur) (= 0 (ly:moment-grace moment)))
           (let ((divlen (* (duration-factor dur) divisions))
