@@ -37,7 +37,7 @@
 \loadPackage lilypond-export
 
 music = <<
-  \relative { a'8 b16 a g8 a32 b c16 b16.. a64 g16 a32 g }
+  \relative { a'8\p\< b16 a g8 a32 b c16 b16..\f a64 g16 a32 g }
   \relative { a'8[ b16 a] g8[ a32 b c16] b16..[ a64 g16 a32 g] }
 >>
 
