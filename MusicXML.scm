@@ -78,7 +78,7 @@
 (define (fifths pitch-alist)
   (let ((flats (length (filter (lambda (pa) (= -1/2 (cdr pa))) pitch-alist)))
         (sharps (length (filter (lambda (pa) (= 1/2 (cdr pa))) pitch-alist)))
-        (others (length (filter (lambda (pa) (and (not (= 1/2 (cdr pa))) (not (= -1/2 (cdr pa))))) pitch-alist))))
+        (others (length (filter (lambda (pa) (not (memv (cdr pa) '(-1/2 1/2)))) pitch-alist))))
     (cond
      ((> others 0) #f)
      ((and (> flats 0) (> sharps 0)) #f)
