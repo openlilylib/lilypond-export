@@ -150,8 +150,8 @@
 (define (make-tuplet tuplet)
   (if (pair? tuplet)
       `(tuplet (@ (number 1)
-                 (placement "above")
-                 (type ,(car tuplet))))
+                  (placement "above")
+                  (type ,(car tuplet))))
       '()))
 
 (define art-map ; articulations
@@ -185,8 +185,8 @@
             (orns (filter identity (map (picker orn-map) art-types)))
             (onots (filter identity (map (picker onot-map) art-types))))
         `(,(if (not (null? arts)) `(articulations ,(map list arts)) '())
-           ,(if (not (null? orns)) `(ornaments ,(map list orns)) '())
-           ,(map list onots)))
+          ,(if (not (null? orns)) `(ornaments ,(map list orns)) '())
+          ,(map list onots)))
       '()))
 
 (define slurs 0)
@@ -194,15 +194,15 @@
 (define (make-slurs slur-num stop-num start-num)
   (if (and stop-num (> stop-num 0) (> slur-num 0))
       `((slur (@ (number ,slur-num)
-                (type "stop")))
+                 (type "stop")))
         ,(make-slurs (- slur-num 1) (- stop-num 1) start-num))
       (if (and start-num (> start-num 0))
           `((slur (@ (number ,slurs)
-                    (type "start")))
+                     (type "start")))
             ,(make-slurs (+ slurs 1) stop-num (- start-num 1)))
           (begin
-           (set! slurs slur-num)
-           '()))))
+            (set! slurs slur-num)
+            '()))))
 
 (define (make-notations chord tuplet art-types slur-start slur-stop)
   (if (or (pair? tuplet) (and (not chord) (or art-types slur-start slur-stop)))
@@ -211,7 +211,7 @@
         ,(if chord
              '()
              `(,(make-articulations art-types)
-                ,(make-slurs slurs slur-stop slur-start))))
+               ,(make-slurs slurs slur-stop slur-start))))
       '()))
 
 (define (acctext accidental)
@@ -425,20 +425,20 @@
 
       `(measure (@ (number ,measure))
          ,(list attributes-element
-            (map-in-order
-             (make-voice-function musicexport measure staff divisions moment-list first-moment)
-             voices)))
+                (map-in-order
+                 (make-voice-function musicexport measure staff divisions moment-list first-moment)
+                 voices)))
       )))
 
 (define (make-staff-function musicexport divisions grid)
   (lambda (staff)
     (let ((measures (sort (filter integer? (tree-get-keys musicexport '()))
-                      (lambda (a b) (< a b))))
+                          (lambda (a b) (< a b))))
           (measure-function (make-measure-function musicexport staff divisions grid))
           (part-id (format #f "P~A" staff)))
 
       `(part (@ (id ,part-id))
-         ,(map-in-order measure-function measures))
+             ,(map-in-order measure-function measures))
       )))
 
 (define (make-score-parts staff-list)
@@ -448,7 +448,7 @@
            `(score-part
              (@ (id ,id))
              (part-name ,part-name))))
-    staff-list))
+       staff-list))
 
 (define-public (exportMusicXML musicexport filename . options)
   (let* ((grid (tree-create 'grid))
@@ -487,4 +487,3 @@
     ))
 
 (set-object-property! exportMusicXML 'file-suffix "xml")
-
