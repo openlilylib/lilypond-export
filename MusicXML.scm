@@ -258,7 +258,9 @@
     (case music-name
 
       ((NoteEvent)
-       `((note
+       `(
+         ,dynamic-element
+         (note
           ,(if chord '(chord) '())
           ,(if (= 0 (ly:moment-grace moment)) '() '(grace))
           ,(make-pitch (ly:music-property m 'pitch))
@@ -288,7 +290,6 @@
                         (text ,lyric)))
                  lyrics)
                '()))
-         ,dynamic-element
          ))
 
       ((RestEvent)
