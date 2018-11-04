@@ -54,7 +54,6 @@
 
 (define notenames '(C D E F G A B))
 (define types '(breve breve whole half quarter eighth 16th 32nd 64th 128th))
-(define (writeln x . args) (if (> (length args) 0) (apply format #t x args)(display x))(newline))
 
 (define (make-pitch p)
   (if (ly:pitch? p)
@@ -475,8 +474,8 @@
                         (lambda (a b) (< a b)))))
       (with-output-to-file filename
         (lambda ()
-          (writeln "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
-          (writeln "<!DOCTYPE score-partwise PUBLIC \"-//Recordare//DTD MusicXML 3.0 Partwise//EN\" \"http://www.musicxml.org/dtds/partwise.dtd\">")
+          (display "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"no\"?>")
+          (display "<!DOCTYPE score-partwise PUBLIC \"-//Recordare//DTD MusicXML 3.0 Partwise//EN\" \"http://www.musicxml.org/dtds/partwise.dtd\">")
           (sxml->xml
            `(score-partwise
              (@ (version "3.0"))
