@@ -128,7 +128,8 @@
     (let ((id 0)
           ; beam- and tuplet-closing is always a step late ...
           (beam-time '(#f . #f))
-          (tuplet-time '(#f . #f)))
+          (tuplet-time '(#f . #f))
+          (dynamic-span #f))
 
       ; search for music-cause of grob
       (define (grob-cause grob)
@@ -251,7 +252,12 @@
 
                    ((eq? (ly:music-property music 'name) 'AbsoluteDynamicEvent)
                     (tree-set! musicexport (list bar moment staff-id voice-id 'abs-dynamic)
-                               (string->symbol (ly:music-property music 'text))))
+                               (string->symbol (ly:music-property music 'text)))
+                    (if dynamic-span
+                        (tree-set!
+                         musicexport
+                         (list bar moment staff-id voice-id 'span-dynamic) 'stop))
+                    (set! dynamic-span #f))
 
                    ((memq (ly:music-property music 'name) '(CrescendoEvent DecrescendoEvent))
                     (let ((dir (ly:music-property music 'span-direction))
@@ -259,6 +265,7 @@
                                     'crescendo 'decrescendo)))
                       (tree-set! musicexport (list bar moment staff-id voice-id 'span-dynamic)
                                  (if (= -1 dir) type 'stop))
+                      (set! dynamic-span (= -1 dir))
                       ))
 
                    ((eq? (ly:music-property music 'name) 'SlurEvent)
