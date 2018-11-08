@@ -229,15 +229,16 @@
 
 (define (make-direction abs-dynamic span-dynamic)
   `(direction
-    (direction-type
-     ,(if abs-dynamic
-          `(dynamics ,(list abs-dynamic))
-          '())
-     ,(if span-dynamic
-          `(wedge (@ (type ,(if (eqv? span-dynamic 'decrescendo)
+    ,(if abs-dynamic
+         `(direction-type
+           (dynamics ,(list abs-dynamic)))
+           '())
+    ,(if span-dynamic
+         `(direction-type
+           (wedge (@ (type ,(if (eqv? span-dynamic 'decrescendo)
                                 'diminuendo
-                                span-dynamic))))
-          '()))))
+                                span-dynamic)))))
+          '())))
 
 (define (writemusic m staff voice divisions . opts)
   (let* ((dur (ly:music-property m 'duration))
