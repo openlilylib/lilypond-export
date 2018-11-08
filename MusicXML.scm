@@ -35,7 +35,6 @@
 (define-module (lilypond-export MusicXML))
 
 (use-modules
- (srfi srfi-1)
  (oll-core tree)
  (lilypond-export api)
  (lilypond-export sxml-to-xml)
@@ -267,8 +266,8 @@
 
       ((NoteEvent)
        (let* ((pitch (ly:music-property m 'pitch))
-              (tie-start (if tie-start-pitches (lset<= equal? (list pitch) tie-start-pitches) #f))
-              (tie-stop (if tie-stop-pitches (lset<= equal? (list pitch) tie-stop-pitches) #f)))
+              (tie-start (if (and tie-start-pitches (member pitch tie-start-pitches)) #t #f))
+              (tie-stop (if (and tie-stop-pitches (member pitch tie-stop-pitches)) #t #f)))
          `(
            ,dynamic-element
            (note
