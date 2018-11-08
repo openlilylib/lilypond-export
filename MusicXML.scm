@@ -32,8 +32,6 @@
 ;%                                                                             %
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-;% TODO ties, slurs, grace notes
-
 (define-module (lilypond-export MusicXML))
 
 (use-modules
@@ -204,10 +202,16 @@
             (set! slurs slur-num)
             '()))))
 
-(define (make-notations chord tuplet art-types slur-start slur-stop)
-  (if (or (pair? tuplet) (and (not chord) (or art-types slur-start slur-stop)))
+(define (make-notations chord tuplet art-types slur-start slur-stop tie-start tie-stop)
+  (if (or (pair? tuplet)
+          (and (not chord)
+               (or art-types slur-start slur-stop))
+          tie-start
+          tie-stop)
       `(notations
         ,(make-tuplet tuplet)
+        ,(if tie-start `(tied (@ (type "start"))) '())
+        ,(if tie-stop `(tied (@ (type "stop"))) '())
         ,(if chord
              '()
              `(,(make-articulations art-types)
@@ -241,6 +245,8 @@
          (pitch-acc (ly:assoc-get 'pitch-acc opts #f #f))
          (slur-start (ly:assoc-get 'slur-start opts #f #f))
          (slur-stop (ly:assoc-get 'slur-stop opts #f #f))
+         (tie-start-pitches (ly:assoc-get 'tie-start-pitches opts #f #f))
+         (tie-stop-pitches (ly:assoc-get 'tie-stop-pitches opts #f #f))
          (abs-dynamic (ly:assoc-get 'abs-dynamic opts #f #f))
          (span-dynamic (ly:assoc-get 'span-dynamic opts #f #f))
          (beam (ly:assoc-get 'beam opts))
@@ -258,39 +264,42 @@
     (case music-name
 
       ((NoteEvent)
-       `(
-         ,dynamic-element
-         (note
-          ,(if chord '(chord) '())
-          ,(if (= 0 (ly:moment-grace moment)) '() '(grace))
-          ,(make-pitch (ly:music-property m 'pitch))
-          ,(make-duration dur moment divisions)
-          (voice ,voice)
-          ,(make-type dur)
-          ,(make-dots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
-          ,(if pitch-acc
-               (let* ((pitch (ly:music-property m 'pitch))
-                      (my-p-a (filter
-                               (lambda (p-a) (and p-a (eqv? pitch (car p-a))))
-                               pitch-acc)))
-                 (if (not (null? my-p-a))
-                     `(accidental ,(acctext (cadar my-p-a)))
-                     '()))
-               '())
-          ,(if (symbol? beam)
-               `(beam (@ (number 1)) ,beam)
-               '())
-          ,(make-timemod dur)
-          ,(make-notations chord tuplet art-types slur-start slur-stop)
-          ,(if (and (not chord) (list? lyrics))
-               (map (lambda (lyric)
-                      ;(ly:message "~A" lyric)
-                      `(lyric
-                        (syllabic "single")
-                        (text ,lyric)))
-                 lyrics)
-               '()))
-         ))
+       (let* ((pitch (ly:music-property m 'pitch))
+              (tie-start (if tie-start-pitches (in-list? pitch tie-start-pitches) #f))
+              (tie-stop (if tie-stop-pitches (in-list? pitch tie-stop-pitches) #f)))
+         `(
+           ,dynamic-element
+           (note
+            ,(if chord '(chord) '())
+            ,(if (= 0 (ly:moment-grace moment)) '() '(grace))
+            ,(make-pitch pitch)
+            ,(make-duration dur moment divisions)
+            ,(if tie-start `(tie (@ (type "start"))) '())
+            ,(if tie-stop `(tie (@ (type "stop"))) '())
+            (voice ,voice)
+            ,(make-type dur)
+            ,(make-dots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
+            ,(if pitch-acc
+                 (let ((my-p-a (filter
+                                (lambda (p-a) (and p-a (eqv? pitch (car p-a))))
+                                pitch-acc)))
+                   (if (not (null? my-p-a))
+                       `(accidental ,(acctext (cadar my-p-a)))
+                       '()))
+                 '())
+            ,(if (symbol? beam)
+                 `(beam (@ (number 1)) ,beam)
+                 '())
+            ,(make-timemod dur)
+            ,(make-notations chord tuplet art-types slur-start slur-stop tie-start tie-stop)
+            ,(if (and (not chord) (list? lyrics))
+                 (map (lambda (lyric)
+                        `(lyric
+                          (syllabic "single")
+                          (text ,lyric)))
+                      lyrics)
+                 '()))
+           )))
 
       ((RestEvent)
        `(note
@@ -300,7 +309,7 @@
          ,(make-type dur)
          ,(make-dots (if (ly:duration? dur) (ly:duration-dot-count dur) 0))
          ,(make-timemod dur)
-         ,(make-notations chord tuplet art-types slur-start slur-stop)
+         ,(make-notations chord tuplet art-types slur-start slur-stop #f #f)
          ))
 
       ((EventChord)
@@ -358,6 +367,8 @@
                   (art-types (tree-get musicexport (list measure moment staff voice 'art-types)))
                   (slur-start (tree-get musicexport (list measure moment staff voice 'slur-start)))
                   (slur-stop (tree-get musicexport (list measure moment staff voice 'slur-stop)))
+                  (tie-start-pitches (tree-get musicexport (list measure moment staff voice 'tie-start-pitches)))
+                  (tie-stop-pitches (tree-get musicexport (list measure moment staff voice 'tie-stop-pitches)))
                   (abs-dynamic (tree-get musicexport (list measure moment staff voice 'abs-dynamic)))
                   (span-dynamic (tree-get musicexport (list measure moment staff voice 'span-dynamic)))
                   (tuplet (tree-get musicexport (list measure moment staff voice 'tuplet)))
@@ -382,6 +393,8 @@
                   `(art-types . ,art-types)
                   `(slur-start . ,slur-start)
                   `(slur-stop . ,slur-stop)
+                  `(tie-start-pitches . ,tie-start-pitches)
+                  `(tie-stop-pitches . ,tie-stop-pitches)
                   `(abs-dynamic . ,abs-dynamic)
                   `(span-dynamic . ,span-dynamic)
                   `(moment . ,moment)
