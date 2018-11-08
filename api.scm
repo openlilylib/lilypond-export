@@ -33,7 +33,7 @@
 ;%                                                                             %
 ;%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-;% TODO ties, slurs, grace notes, bar lines
+;% TODO bar lines
 
 (define-module (lilypond-export api))
 
@@ -82,6 +82,16 @@
 
 ; check name property of music object ... just a shortcut
 (define-public (music-is? m n) (and (ly:music? m)(eq? n (ly:music-property m 'name))))
+
+(define-public (in-list? val ls)
+  (if (null? ls) #f
+      (if (equal? val (car ls)) #t (in-list? val (cdr ls)))))
+
+(define (intersection ls1 ls2)
+  (if (null? ls1) '()
+      (if (in-list? (car ls1) ls2)
+          (cons (car ls1) (intersection (cdr ls1) ls2))
+          (intersection (cdr ls1) ls2))))
 
 ; combine note-events to event-chord
 (define (combine-notes current music)
@@ -324,6 +334,30 @@
 
        ; store beam span
        (end-acknowledgers
+        ((tie-interface engraver grob source-engraver)
+         (let* ((musicexport (ly:context-property context ctprop::music-export))
+                (musicstep (ly:context-property context ctprop::export-step))
+                (staff-id (ly:context-property context ctprop::staff-id))
+                (voice-id (ly:context-property context ctprop::voice-id))
+                (bar (ly:context-property context 'currentBarNumber 1))
+                (moment (ly:context-property context 'measurePosition (ly:make-moment 0)))
+                (current-music (tree-get musicstep (list staff-id voice-id)))
+                (start-timestamp (ly:music-property (grob-cause grob) 'timestamp))
+                (start-music (tree-get musicexport
+                                       (list (car start-timestamp) (cdr start-timestamp) staff-id voice-id)))
+                (note-pitch (lambda (m) (ly:music-property m 'pitch)))
+                (pitch-picker
+                 (lambda (m)
+                   (cond
+                    ((music-is? m 'NoteEvent) (list (note-pitch m)))
+                    ((music-is? m 'EventChord) (map note-pitch (ly:music-property m 'elements)))
+                    (else #f))))
+                (start-pitches (pitch-picker start-music))
+                (current-pitches (pitch-picker current-music))
+                (common-pitches (intersection start-pitches current-pitches)))
+           (tree-set! musicexport (list (car start-timestamp) (cdr start-timestamp) staff-id voice-id 'tie-start-pitches) common-pitches)
+           (tree-set! musicexport (list bar moment staff-id voice-id 'tie-stop-pitches) common-pitches)))
+
         ((beam-interface engraver grob source-engraver)
          (let ((musicexport (ly:context-property context ctprop::music-export))
                ;(musicstep (ly:context-property context ctprop::export-step))
