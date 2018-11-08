@@ -38,6 +38,7 @@
 (define-module (lilypond-export api))
 
 (use-modules
+ (srfi srfi-1)
  (oll-core tree)
  (lilypond-export lily)
  (lilypond-export MEI)
@@ -82,16 +83,6 @@
 
 ; check name property of music object ... just a shortcut
 (define-public (music-is? m n) (and (ly:music? m)(eq? n (ly:music-property m 'name))))
-
-(define-public (in-list? val ls)
-  (if (null? ls) #f
-      (if (equal? val (car ls)) #t (in-list? val (cdr ls)))))
-
-(define (intersection ls1 ls2)
-  (if (null? ls1) '()
-      (if (in-list? (car ls1) ls2)
-          (cons (car ls1) (intersection (cdr ls1) ls2))
-          (intersection (cdr ls1) ls2))))
 
 ; combine note-events to event-chord
 (define (combine-notes current music)
@@ -361,7 +352,7 @@
                     (else #f))))
                 (start-pitches (pitch-picker start-music))
                 (current-pitches (pitch-picker current-music))
-                (common-pitches (intersection start-pitches current-pitches)))
+                (common-pitches (lset-intersection equal? start-pitches current-pitches)))
            (tree-set! musicexport (list (car start-timestamp) (cdr start-timestamp) staff-id voice-id 'tie-start-pitches) common-pitches)
            (tree-set! musicexport (list bar moment staff-id voice-id 'tie-stop-pitches) common-pitches)))
 
