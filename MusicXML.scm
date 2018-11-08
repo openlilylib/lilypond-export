@@ -266,8 +266,8 @@
 
       ((NoteEvent)
        (let* ((pitch (ly:music-property m 'pitch))
-              (tie-start (if (and tie-start-pitches (member pitch tie-start-pitches)) #t #f))
-              (tie-stop (if (and tie-stop-pitches (member pitch tie-stop-pitches)) #t #f)))
+              (tie-start (and tie-start-pitches (member pitch tie-start-pitches)))
+              (tie-stop (and tie-stop-pitches (member pitch tie-stop-pitches))))
          `(
            ,dynamic-element
            (note
