@@ -157,10 +157,12 @@
            (writetuplet tuplet)
            (if (and (not chord) (list? lyrics))
                (for-each
-                (lambda (lyric)
-                  ;(ly:message "~A" lyric)
-                  (writeln "<lyric><syllabic>single</syllabic><text>~A</text></lyric>" lyric)
-                  ) lyrics))
+                (lambda (indexed-lyric)
+                  ;(ly:message "~A" indexed-lyric)
+                  (writeln "<lyric number=\"~A\"><syllabic>single</syllabic><text>~A</text></lyric>"
+                    (+ 1 (list-ref indexed-lyric 1))
+                    (list-ref indexed-lyric 0))
+                  ) (map list lyrics (iota (length lyrics)))))
 
            (writeln "</note>"))
 
