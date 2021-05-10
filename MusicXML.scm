@@ -294,11 +294,13 @@
                  '())
             ,(make-notations chord tuplet art-types slur-start slur-stop tie-start tie-stop)
             ,(if (and (not chord) (list? lyrics))
-                 (map (lambda (lyric)
+                 (map (lambda (indexed-lyric)
                         `(lyric
+                          (@ (number ,(list-ref indexed-lyric 1)))
                           (syllabic "single")
-                          (text ,lyric)))
-                      lyrics)
+                          (text ,(list-ref indexed-lyric 0))
+                          ))
+                      (map list lyrics (iota (length lyrics))))
                  '()))
            )))
 
