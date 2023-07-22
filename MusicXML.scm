@@ -58,7 +58,7 @@
         (division-dur (tree-get musicexport '(division-dur)))
         (divisions 1))
     (define notenames '(C D E F G A B))
-    (define types '(breve breve whole half quarter eighth 16th 32nd 64th 128th))
+    (define types '("breve" "breve" "whole" "half" "quarter" "eighth" "16th" "32nd" "64th" "128th"))
     (define (writeln x . args) (if (> (length args) 0) (apply format #t x args)(display x))(newline))
     (define (writepitch p)
       (if (ly:pitch? p)
@@ -308,4 +308,3 @@
     ))
 
 (set-object-property! exportMusicXML 'file-suffix "xml")
-
